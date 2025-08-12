@@ -16,6 +16,7 @@ return new class extends Migration
             $table->uuid('card_id');
             $table->string('status');
             $table->text('comment')->nullable();
+            $table->uuid('changed_by')->nullable();
             $table->timestamps();
             
             $table->foreign('card_id')->references('id')->on('cards')->onDelete('cascade');

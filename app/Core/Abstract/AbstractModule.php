@@ -61,7 +61,7 @@ abstract class AbstractModule implements ModuleInterface
         $routesPath = $this->path . '/Http/routes.php';
         
         if (file_exists($routesPath)) {
-            require $routesPath;
+            require_once $routesPath;
         }
     }
 
