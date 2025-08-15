@@ -2,9 +2,7 @@
 
 namespace App\Modules\Card\Models;
 
-use App\Modules\Card\Enums\CardAccessLevelEnum;
-use Illuminate\Database\Eloquent\Concerns\HasUuids;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
+use App\Modules\Card\Enums\CardAccessLevel;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use App\Modules\User\Models\User;
@@ -12,8 +10,6 @@ use \Illuminate\Support\Collection;
 
 class CardAccessControl extends Model
 {
-    use HasFactory, HasUuids;
-
     public $timestamps = false;
 
     protected $fillable = [
@@ -21,6 +17,7 @@ class CardAccessControl extends Model
         'card_id',
         'user_id',
         'access_level',
+        'created_by',
         'created_at',
         'updated_at',
     ];
@@ -44,7 +41,7 @@ class CardAccessControl extends Model
     {
         return self::where('card_id', $card->id)
             ->where('user_id', $user->id)
-            ->where('access_level', CardAccessLevelEnum::MANAGE)
+            ->where('access_level', CardAccessLevel::MANAGE)
             ->exists();
     }
 
@@ -52,7 +49,7 @@ class CardAccessControl extends Model
     {
         return self::where('card_id', $card->id)
             ->where('user_id', $user->id)
-            ->whereIn('access_level', [CardAccessLevelEnum::VIEW, CardAccessLevelEnum::MANAGE])
+            ->whereIn('access_level', [CardAccessLevel::VIEW, CardAccessLevel::MANAGE])
             ->exists();
     }
 
@@ -61,7 +58,7 @@ class CardAccessControl extends Model
         return static::create([
             'card_id' => $card->id,
             'user_id' => $parent->id,
-            'access_level' => CardAccessLevelEnum::VIEW,
+            'access_level' => CardAccessLevel::VIEW,
             'created_at' => now(),
             'is_active' => true,
         ]);
