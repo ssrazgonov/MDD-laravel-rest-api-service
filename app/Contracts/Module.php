@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Core\Interfaces;
+namespace App\Contracts;
 
-interface ModuleInterface
+interface Module
 {
     public function getName(): string;
 

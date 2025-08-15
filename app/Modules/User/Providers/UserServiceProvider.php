@@ -2,8 +2,8 @@
 
 namespace App\Modules\User\Providers;
 
-use App\Core\Abstract\AbstractServiceProvider;
+use App\Base\ModuleServiceProvider;
 
-class UserServiceProvider extends AbstractServiceProvider
+class UserServiceProvider extends ModuleServiceProvider
 {
 }

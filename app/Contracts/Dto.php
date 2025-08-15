@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Core\Interfaces;
+namespace App\Contracts;
 
-interface DtoInterface
+interface Dto
 {
     public function toArray(): array;
     

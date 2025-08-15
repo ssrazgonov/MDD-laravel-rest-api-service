@@ -2,8 +2,8 @@
 
 namespace App\Modules\Card\Providers;
 
-use App\Core\Abstract\AbstractServiceProvider;
+use App\Base\ModuleServiceProvider;
 
-class CardServiceProvider extends AbstractServiceProvider
+class CardServiceProvider extends ModuleServiceProvider
 {
 }

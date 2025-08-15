@@ -1,12 +1,12 @@
 <?php
 
-namespace App\Core\Abstract;
+namespace App\Base;
 
-use App\Core\Interfaces\DtoInterface;
+use App\Contracts\Dto as DtoContract;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
 
-abstract class AbstractDto implements DtoInterface
+abstract class Dto implements DtoContract
 {
     public function __construct(array $data)
     {

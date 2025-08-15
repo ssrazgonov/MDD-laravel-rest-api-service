@@ -2,10 +2,10 @@
 
 namespace App\Modules\User;
 
-use App\Core\Abstract\AbstractModule;
+use App\Base\Module;
 use App\Modules\User\Providers\UserServiceProvider;
 
-class UserModule extends AbstractModule
+class UserModule extends Module
 {
     protected string $name = 'user';
     

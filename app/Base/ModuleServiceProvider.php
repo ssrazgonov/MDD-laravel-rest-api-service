@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Core\Abstract;
+namespace App\Base;
 
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\ServiceProvider;
 
-abstract class AbstractServiceProvider extends ServiceProvider
+abstract class ModuleServiceProvider extends ServiceProvider
 {
     public function boot(): void
     {

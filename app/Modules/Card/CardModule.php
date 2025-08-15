@@ -2,10 +2,10 @@
 
 namespace App\Modules\Card;
 
-use App\Core\Abstract\AbstractModule;
+use App\Base\Module;
 use App\Modules\Card\Providers\CardServiceProvider;
 
-class CardModule extends AbstractModule
+class CardModule extends Module
 {
     protected string $name = 'card';
     

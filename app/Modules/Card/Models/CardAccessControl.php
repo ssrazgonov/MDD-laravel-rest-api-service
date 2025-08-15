@@ -2,7 +2,6 @@
 
 namespace App\Modules\Card\Models;
 
-use App\Enums\AccessLevel;
 use App\Modules\Card\Enums\CardAccessLevelEnum;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;

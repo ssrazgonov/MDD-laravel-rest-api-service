@@ -1,12 +1,12 @@
 <?php
 
-namespace App\Core\Abstract;
+namespace App\Base;
 
-use App\Core\Interfaces\ModuleInterface;
+use App\Contracts\Module as ModuleContract;
 use Illuminate\Support\Facades\File;
 use ReflectionClass;
 
-abstract class AbstractModule implements ModuleInterface
+abstract class Module implements ModuleContract
 {
     protected string $name;
     protected string $path;
