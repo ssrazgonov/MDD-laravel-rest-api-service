@@ -2,7 +2,7 @@
 
 namespace App\Modules\Card\Enums;
 
-enum CardAccessLevelEnum: string
+enum CardAccessLevel: string
 {
     case VIEW = 'view';
     case MANAGE = 'manage';
