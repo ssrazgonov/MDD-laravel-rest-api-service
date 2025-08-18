@@ -6,6 +6,6 @@ use App\Base\Action;
 
 final readonly class DeactivateCard extends Action
 {
-    protected function __invoke()
+    public function __invoke()
     {}
 }

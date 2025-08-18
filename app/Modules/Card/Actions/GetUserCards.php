@@ -6,6 +6,6 @@ use App\Base\Action;
 
 final readonly class GetUserCards extends Action
 {
-    protected function __invoke()
+    public function __invoke()
     {}
 }

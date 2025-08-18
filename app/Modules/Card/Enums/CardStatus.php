@@ -5,7 +5,7 @@ namespace App\Modules\Card\Enums;
 enum CardStatus: string
 {
     case ACTIVE = 'active';
-    case INACTIVE = 'disabled';
+    case INACTIVE = 'inactive';
 
     public function label(): string
     {

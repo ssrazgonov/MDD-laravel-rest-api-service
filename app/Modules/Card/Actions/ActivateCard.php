@@ -3,47 +3,56 @@
 namespace App\Modules\Card\Actions;
 
 use App\Base\Action;
+use App\Base\ErrorDto;
+use App\Modules\Card\Actions\StatusHistory\CreateCardStatusHistory;
 use App\Modules\Card\Dto\Actions\ActivateCardDto;
-use App\Modules\Card\Dto\CardDto;
+use App\Modules\Card\Dto\Actions\StatusHistory\CreateCardStatusHistoryDto;
+use App\Modules\Card\Dto\ActionsResults\ActivateCardResultDto;
+use App\Modules\Card\Enums\CardStatus;
+use Illuminate\Support\Facades\DB;
 use App\Modules\Card\Models\Card;
-use App\Enums\CardStatus;
+use RuntimeException;
+use Throwable;
 
 final readonly class ActivateCard extends Action
 {
-    protected function __invoke(ActivateCardDto $dto): ?CardDto
+    public function __construct(readonly public CreateCardStatusHistory $createCardStatusHistory)
+    {}
+
+    public function __invoke(ActivateCardDto $dto): ActivateCardResultDto
     {
-        $card = Card::where('id', $dto->card_id)
-                    ->where('user_id', $dto->user_id)
-                    ->first();
+        DB::beginTransaction();
 
-        if (!$card) {
-            throw new \Exception("Карта не найдена или не принадлежит пользователю.");
+        try {
+            $card = Card::findOrFail($dto->cardId);
+
+            $card->update([
+                'status' => CardStatus::ACTIVE,
+            ]);
+
+            $createCardStatusHistoryResult = ($this->createCardStatusHistory)(
+                new CreateCardStatusHistoryDto(card: $card, comment: $dto->comment)
+            );
+
+            if (!$createCardStatusHistoryResult->status) {
+                throw new RuntimeException(
+                    $createCardStatusHistoryResult->error->error,
+                    code: $createCardStatusHistoryResult->error->code);
+            }
+
+            DB::commit();
+
+            return new ActivateCardResultDto(status: true);
+        } catch (Throwable $excepion) {
+            DB::rollBack();
+            dd($excepion);
+            return new ActivateCardResultDto(
+                status: false,
+                error: new ErrorDto(
+                    error: $excepion->getMessage(),
+                    code: $excepion->getCode()
+                ),
+            );
         }
-
-        if ($card->status === CardStatus::ACTIVE) {
-            throw new \Exception("Карта уже активна.");
-        }
-
-        if (Card::hasActiveCard($dto->user_id)) {
-            throw new \Exception("У вас уже есть активная карта. Сначала деактивируйте её.");
-        }
-
-        $card->update([
-            'status' => CardStatus::ACTIVE,
-        ]);
-
-
-        $card->logStatusChange(CardStatus::ACTIVE, 'Карта активирована пользователем');
-
-        return new CardDto([
-            'id' => $card->id,
-            'user_id' => $card->user_id,
-            'last_4_digits' => $card->last_4_digits,
-            'owner_name' => $card->owner_name,
-            'status' => $card->status->value,
-            'comment' => $card->comment,
-            'created_at' => $card->created_at->toISOString(),
-            'updated_at' => $card->updated_at->toISOString(),
-        ]);
     }
 }

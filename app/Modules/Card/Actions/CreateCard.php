@@ -10,6 +10,7 @@ use App\Modules\Card\Actions\CardAccess\ProvideCardAccess;
 use App\Modules\Card\Actions\StatusHistory\CreateCardStatusHistory;
 use App\Modules\Card\Dto\Actions\CardAccess\ProvideCardAccessDto;
 use App\Base\ErrorDto;
+use App\Modules\Card\Dto\Actions\ActivateCardDto;
 use App\Modules\Card\Dto\ActionsResults\CreateCardResultDto;
 use App\Modules\Card\Enums\CardAccessLevel;
 use Illuminate\Support\Facades\DB;
@@ -19,7 +20,7 @@ final readonly class CreateCard extends Action
 {
     public function __construct(
         readonly private ProvideCardAccess $provideCardAccess,
-        readonly private CreateCardStatusHistory $createCardStatusHistory,
+        readonly private ActivateCard $activateCard,
     ){}
 
     public function __invoke(CreateCardDto $createCardActionDto): ?CreateCardResultDto
@@ -41,6 +42,8 @@ final readonly class CreateCard extends Action
                 'status' => CardStatus::INACTIVE,
                 'comment' => $createCardActionDto->comment ?? null,
             ]);
+
+            ($this->activateCard)(new ActivateCardDto(cardId: $card->id));
 
             ($this->provideCardAccess)(new ProvideCardAccessDto(
                 userId: $createCardActionDto->userId,
