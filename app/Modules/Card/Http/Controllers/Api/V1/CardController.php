@@ -2,8 +2,8 @@
 
 namespace App\Modules\Card\Http\Controllers\Api\V1;
 
-use App\Modules\Card\Actions\CreateCardAction;
-use App\Modules\Card\Dto\Actions\CreateCardActionDto;
+use App\Modules\Card\Actions\CreateCard;
+use App\Modules\Card\Dto\Actions\CreateCardDto;
 use App\Modules\Card\Http\Requests\CreateCardRequest;
 use App\Modules\Card\Http\Resources\CardResource;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
@@ -15,10 +15,14 @@ class CardController extends Controller
 {
     use AuthorizesRequests, DispatchesJobs, ValidatesRequests;
 
-    public function store(CreateCardRequest $request, CreateCardAction $createCardAction)
+    public function store(CreateCardRequest $request, CreateCard $createCard)
     {
-        $cardData = CreateCardActionDto::fromArray($request->validated());
+        $createCardResult = $createCard(CreateCardDto::fromArray($request->validated()));
 
-        return new CardResource($createCardAction($cardData));
+        if (!$createCardResult->status) {
+            return response()->json($createCardResult, 500);
+        }
+
+        return response()->json($createCardResult, 200);
     }
 }

@@ -2,20 +2,27 @@
 
 namespace App\Modules\Card\Models;
 
-use App\Enums\CardStatus;
+use App\Modules\Card\Enums\CardStatus;
 use Illuminate\Database\Eloquent\Model;
 
 class Card extends Model
 {
     protected $fillable = [
         'user_id',
-        'hashed_pan',
-        'last_4_digits',
+        'hash',
+        'last_digits',
         'status',
         'comment'
     ];
 
-        protected $casts = [
+    protected $casts = [
         'status' => CardStatus::class
     ];
+
+    public static function existsForUserWithHash(string $userId, string $hashedPan): bool
+    {
+        return self::where('user_id', $userId)
+            ->where('hash', $hashedPan)
+            ->exists();
+    }
 }

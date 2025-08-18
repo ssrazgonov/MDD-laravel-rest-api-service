@@ -14,7 +14,10 @@ abstract class Dto implements DtoContract
         $this->fillProperties($validated);
     }
     
-    abstract protected function rules(): array;
+    protected function rules(): array
+    {
+        return [];
+    }
     
     protected function validateData(array $data): array
     {
@@ -43,7 +46,40 @@ abstract class Dto implements DtoContract
     
     public static function fromArray(array $data): static
     {
-        return new static($data);
+        $reflection = new \ReflectionClass(static::class);
+        $constructor = $reflection->getConstructor();
+        $parameters = $constructor->getParameters();
+        
+        $args = [];
+        
+        foreach ($parameters as $param) {
+            $name = $param->getName();
+            $key = self::snakeCase($name);
+            
+            $value = $data[$name] ?? $data[$key] ?? null;
+            
+            $type = $param->getType();
+            if ($type && !$type->isBuiltin()) {
+                $typeName = $type->getName();
+
+                if (is_subclass_of($typeName, \UnitEnum::class) && is_string($value)) {
+                    $value = $typeName::from($value);
+                }
+            }
+            
+            if ($value === null && $param->isDefaultValueAvailable()) {
+                $value = $param->getDefaultValue();
+            }
+            
+            $args[$name] = $value;
+        }
+        
+        return new static(...$args);
+    }
+    
+    private static function snakeCase(string $input): string
+    {
+        return strtolower(preg_replace('/(?<!^)[A-Z]/', '_$0', $input));
     }
     
     public function validate(): bool

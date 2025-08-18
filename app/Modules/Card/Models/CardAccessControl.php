@@ -52,29 +52,4 @@ class CardAccessControl extends Model
             ->whereIn('access_level', [CardAccessLevel::VIEW, CardAccessLevel::MANAGE])
             ->exists();
     }
-
-    public static function createForChildCard(Card $card, User $parent): static
-    {
-        return static::create([
-            'card_id' => $card->id,
-            'user_id' => $parent->id,
-            'access_level' => CardAccessLevel::VIEW,
-            'created_at' => now(),
-            'is_active' => true,
-        ]);
-    }
-
-    /**
-     * @return Collection<int, User>
-     */
-    public static function getCardManagers(Card $card): Collection
-    {
-        return self::where('card_id', $card->id)
-            ->where('access_level', 'manage')
-            ->with('user')
-            ->get()
-            ->map(function (CardAccessControl $accessControl) {
-                return $accessControl->user;
-            });
-    }
 }

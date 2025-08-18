@@ -12,10 +12,10 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('cards', function (Blueprint $table) {
-            $table->uuid('id')->primary();
+            $table->id();
             $table->uuid('user_id');
-            $table->string('card_hash')->unique();
-            $table->string('last_four_digits', 4);
+            $table->string('hash')->unique();
+            $table->string('last_digits', 4);
             $table->string('status')->default('active');
             $table->text('comment')->nullable();
 
@@ -24,7 +24,7 @@ return new class extends Migration
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
             
             $table->index(['user_id', 'status']);
-            $table->index('card_hash');
+            $table->index('hash');
             $table->index('created_at');
         });
     }

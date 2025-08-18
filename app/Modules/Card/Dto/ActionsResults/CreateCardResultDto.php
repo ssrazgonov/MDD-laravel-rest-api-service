@@ -1,0 +1,16 @@
+<?php
+
+namespace App\Modules\Card\Dto\ActionsResults;
+
+use App\Base\Dto;
+use App\Base\ErrorDto;
+use App\Modules\Card\Models\Card;
+
+class CreateCardResultDto extends Dto
+{
+    public function __construct(
+        public bool $status,
+        public ?ErrorDto $error = null,
+        public ?Card $card = null,
+    ){}
+}

@@ -2,7 +2,7 @@
 
 namespace App\Providers;
 
-use App\Core\Interfaces\ModuleInterface;
+use App\Contracts\Module;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\ServiceProvider;
 
@@ -66,7 +66,7 @@ class ModuleServiceProvider extends ServiceProvider
                 try {
                     $moduleInstance = new $moduleClass();
 
-                    if ($moduleInstance instanceof ModuleInterface) {
+                    if ($moduleInstance instanceof Module) {
                         $modules[] = $moduleInstance;
                     } else {
                         Log::warning("Module class {$moduleClass} does not implement ModuleInterface.");

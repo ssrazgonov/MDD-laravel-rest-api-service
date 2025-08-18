@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('card_access_controls', function (Blueprint $table) {
             $table->id();
-            $table->uuid('card_id');
+            $table->unsignedBigInteger('card_id');
             $table->uuid('user_id');
             $table->string('access_level')->default('manage');
             $table->timestamps();
@@ -24,7 +24,6 @@ return new class extends Migration
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
         });
     }
-
     /**
      * Reverse the migrations.
      */

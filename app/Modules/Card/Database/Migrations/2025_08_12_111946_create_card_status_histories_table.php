@@ -12,8 +12,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('card_status_histories', function (Blueprint $table) {
-            $table->uuid('id')->primary();
-            $table->uuid('card_id');
+            $table->id();
+            $table->unsignedInteger('card_id');
             $table->string('status');
             $table->text('comment')->nullable();
             $table->uuid('changed_by')->nullable();
