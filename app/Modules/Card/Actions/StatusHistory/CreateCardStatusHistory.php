@@ -18,7 +18,7 @@ final readonly class CreateCardStatusHistory extends Action
                 'card_id' => $createCardStatusHistoryDto->card->id,
                 'status' => $createCardStatusHistoryDto->card->status->value,
                 'comment' => $createCardStatusHistoryDto->comment,
-                'created_by' => $createCardStatusHistoryDto->card->user_id
+                'changed_by' => $createCardStatusHistoryDto->card->user_id
             ]);
 
             return new CreateCardStatusHistoryResultDto(status: true);

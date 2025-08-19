@@ -6,12 +6,8 @@ use App\Base\Dto;
 
 class DeactivateCardDto extends Dto
 {
-    public string $user_id;
-    public string $card_id;
-    public ?string $comment;
-    
-    protected function rules(): array
-    {
-        return [];
-    }
+    public function __construct(
+        public int $cardId,
+        public ?string $comment = null
+    ){}
 }

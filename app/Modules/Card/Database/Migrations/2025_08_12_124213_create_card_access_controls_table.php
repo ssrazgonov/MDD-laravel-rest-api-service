@@ -13,9 +13,9 @@ return new class extends Migration
     {
         Schema::create('card_access_controls', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('card_id');
+            $table->unsignedInteger('card_id');
             $table->uuid('user_id');
-            $table->string('access_level')->default('manage');
+            $table->string('access_level')->default('view');
             $table->timestamps();
 
             $table->unique(['card_id', 'user_id']);

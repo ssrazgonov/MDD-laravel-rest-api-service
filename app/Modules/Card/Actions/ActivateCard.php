@@ -6,16 +6,21 @@ use App\Base\Action;
 use App\Base\ErrorDto;
 use App\Modules\Card\Actions\StatusHistory\CreateCardStatusHistory;
 use App\Modules\Card\Dto\Actions\ActivateCardDto;
+use App\Modules\Card\Dto\Actions\DeactivateCardDto;
 use App\Modules\Card\Dto\Actions\StatusHistory\CreateCardStatusHistoryDto;
 use App\Modules\Card\Dto\ActionsResults\ActivateCardResultDto;
 use App\Modules\Card\Enums\CardStatus;
 use Illuminate\Support\Facades\DB;
 use App\Modules\Card\Models\Card;
+use DomainException;
 use Throwable;
 
 final readonly class ActivateCard extends Action
 {
-    public function __construct(readonly public CreateCardStatusHistory $createCardStatusHistory) {}
+    public function __construct(
+        readonly private CreateCardStatusHistory $createCardStatusHistory,
+        readonly private DeactivateCard $deactivateCard,
+    ) {}
 
     public function __invoke(ActivateCardDto $dto): ActivateCardResultDto
     {
@@ -23,6 +28,16 @@ final readonly class ActivateCard extends Action
 
         try {
             $card = Card::findOrFail($dto->cardId);
+
+            if ($card->status === CardStatus::ACTIVE) {
+                throw new DomainException('Карта уже активирована');
+            }
+
+            if ($card->user->hasActiveCard()) {
+                $this->handleResult(($this->deactivateCard)(
+                    new DeactivateCardDto(cardId: $card->user->activeCard()->id)
+                ));
+            }
 
             $card->update([
                 'status' => CardStatus::ACTIVE,

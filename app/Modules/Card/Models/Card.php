@@ -3,7 +3,9 @@
 namespace App\Modules\Card\Models;
 
 use App\Modules\Card\Enums\CardStatus;
+use App\Modules\User\Models\User;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Card extends Model
 {
@@ -18,6 +20,11 @@ class Card extends Model
     protected $casts = [
         'status' => CardStatus::class
     ];
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
 
     public static function existsForUserWithHash(string $userId, string $hashedPan): bool
     {

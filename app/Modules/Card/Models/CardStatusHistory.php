@@ -12,9 +12,9 @@ class CardStatusHistory extends Model
 {
     protected $fillable = [
         'card_id',
-        'user_id',
         'status',
         'comment',
+        'changed_by',
     ];
 
     protected $casts = [

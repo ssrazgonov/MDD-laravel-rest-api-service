@@ -6,8 +6,4 @@ use App\Base\Dto;
 
 class CardDto extends Dto
 {
-    protected function rules(): array
-    {
-        return [];
-    }
 }

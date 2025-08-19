@@ -16,10 +16,11 @@ return new class extends Migration
             $table->unsignedInteger('card_id');
             $table->string('status');
             $table->text('comment')->nullable();
-            $table->uuid('changed_by')->nullable();
+            $table->uuid('changed_by');
             $table->timestamps();
             
             $table->foreign('card_id')->references('id')->on('cards')->onDelete('cascade');
+            $table->foreign('changed_by')->references('id')->on('users')->onDelete('cascade');
             
             $table->index('card_id');
             $table->index('created_at');
