@@ -25,4 +25,11 @@ class Card extends Model
             ->where('hash', $hashedPan)
             ->exists();
     }
+
+    public function shouldAutoActivate(): bool
+    {
+        return !static::where('user_id', $this->user_id)
+            ->where('status', CardStatus::ACTIVE)
+            ->exists();
+    }
 }

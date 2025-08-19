@@ -14,6 +14,7 @@ use App\Modules\Card\Dto\Actions\ActivateCardDto;
 use App\Modules\Card\Dto\ActionsResults\CreateCardResultDto;
 use App\Modules\Card\Enums\CardAccessLevel;
 use Illuminate\Support\Facades\DB;
+use App\Modules\Card\Dto\Actions\StatusHistory\CreateCardStatusHistoryDto;
 use Throwable;
 
 final readonly class CreateCard extends Action
@@ -21,7 +22,8 @@ final readonly class CreateCard extends Action
     public function __construct(
         readonly private ProvideCardAccess $provideCardAccess,
         readonly private ActivateCard $activateCard,
-    ){}
+        readonly public CreateCardStatusHistory $createCardStatusHistory
+    ) {}
 
     public function __invoke(CreateCardDto $createCardActionDto): ?CreateCardResultDto
     {
@@ -30,8 +32,7 @@ final readonly class CreateCard extends Action
         try {
             $hashedPan = hash('sha256', $createCardActionDto->pan);
 
-            if (Card::existsForUserWithHash($createCardActionDto->userId, $hashedPan))
-            {
+            if (Card::existsForUserWithHash($createCardActionDto->userId, $hashedPan)) {
                 throw new \DomainException("Эта карта уже добавлена в ваш профиль.", 409);
             }
 
@@ -43,22 +44,34 @@ final readonly class CreateCard extends Action
                 'comment' => $createCardActionDto->comment ?? null,
             ]);
 
-            ($this->activateCard)(new ActivateCardDto(cardId: $card->id));
+            if ($card->shouldAutoActivate()) {
+                $this->handleResult(($this->activateCard)(new ActivateCardDto(
+                    cardId: $card->id,
+                    comment: 'Карта создана и активирована'
+                )));
+            } else {
+                $this->handleResult(($this->createCardStatusHistory)(
+                    new CreateCardStatusHistoryDto(card: $card, comment: 'Карта создана')
+                ));
+            }
 
-            ($this->provideCardAccess)(new ProvideCardAccessDto(
-                userId: $createCardActionDto->userId,
-                cardId: $card->id,
-                level: CardAccessLevel::MANAGE
-            ));
+            $this->handleResult(
+                ($this->provideCardAccess)(new ProvideCardAccessDto(
+                    userId: $createCardActionDto->userId,
+                    cardId: $card->id,
+                    level: CardAccessLevel::MANAGE
+                ))
+            );
+
+            $card->refresh();
 
             DB::commit();
 
             return new CreateCardResultDto(card: $card, status: true);
         } catch (Throwable $exception) {
             DB::rollBack();
-            // dd($exception);
             return new CreateCardResultDto(
-                error: new ErrorDto(error: $exception->getMessage(), code: $exception->getCode()), 
+                error: new ErrorDto(error: $exception->getMessage(), code: $exception->getCode()),
                 status: false
             );
         }

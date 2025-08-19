@@ -2,11 +2,11 @@
 
 namespace App\Modules\Card\Dto\ActionsResults;
 
-use App\Base\Dto;
+use App\Base\ActionResultDto;
 use App\Base\ErrorDto;
 use App\Modules\Card\Models\Card;
 
-class CreateCardResultDto extends Dto
+class CreateCardResultDto extends ActionResultDto
 {
     public function __construct(
         public bool $status,

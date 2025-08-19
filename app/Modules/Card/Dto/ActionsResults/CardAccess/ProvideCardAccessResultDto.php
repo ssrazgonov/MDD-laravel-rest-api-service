@@ -2,10 +2,10 @@
 
 namespace App\Modules\Card\Dto\ActionsResults\CardAccess;
 
-use App\Base\Dto;
+use App\Base\ActionResultDto;
 use App\Base\ErrorDto;
 
-class ProvideCardAccessResultDto extends Dto
+class ProvideCardAccessResultDto extends ActionResultDto
 {
     public function __construct(
         public bool $status,

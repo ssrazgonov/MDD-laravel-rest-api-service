@@ -1,5 +1,4 @@
 <?php
-// app/Modules/Card/Models/CardStatusHistory.php
 
 namespace App\Modules\Card\Models;
 
@@ -11,8 +10,6 @@ use App\Modules\User\Models\User;
 
 class CardStatusHistory extends Model
 {
-    protected $table = 'card_status_histories';
-
     protected $fillable = [
         'card_id',
         'user_id',
