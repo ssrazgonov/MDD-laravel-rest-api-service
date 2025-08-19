@@ -6,7 +6,5 @@ use App\Base\Dto;
 
 class GetCardStatusHistoryDto extends Dto
 {
-    public string $user_id;
-    public string $card_id;
-    public ?string $comment;
+    public string $cardId;
 }

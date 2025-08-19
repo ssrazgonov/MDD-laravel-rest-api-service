@@ -5,4 +5,6 @@ use Illuminate\Support\Facades\Route;
 
 Route::middleware([])->prefix('api/v1')->group(function () {
     Route::apiResource('card', CardController::class);
+    Route::post('card/activate', [CardController::class, 'activate']);
+    Route::post('card/deactivate', [CardController::class, 'deactivate']);
 });
