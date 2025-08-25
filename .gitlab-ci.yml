@@ -1,0 +1,49 @@
+variables:
+  IMAGE_NAME: resident-card-service
+  PHP_VERSION: "8.4"
+  BASE_IMAGE: "$CI_REGISTRY/php/base:$PHP_VERSION"
+  WEB_NETWORK: ndb_net
+  # укажи внешние порты, если хочешь открыть их на сервере
+  DOCKER_PORT_PROD:
+  DOCKER_PORT_DEV:
+  # команда запуска контейнера
+  APP_CMD:
+  # доп. флаги для docker run
+  DOCKER_RUN_EXTRA_ARGS:
+
+include:
+  - project: 'devops-tools/gitlab-ci-templates/php'
+    ref: main
+    file:
+      - '.docker-build-php.gitlab-ci.yml'
+      - '.deploy-php.gitlab-ci.yml'
+      - '.tests-sonar-php.gitlab-ci.yml'
+
+stages:
+  - docker-build
+  - tests
+  - sonarqube-check
+  - deploy
+
+tests:
+  extends: .tests
+  allow_failure: true
+  image: ${NEXUS}/php/base:8.4
+
+sonarqube-check:
+  extends: .sonarqube-check
+  allow_failure: true
+
+deploy:
+  extends: .deploy
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+      variables:
+        TEAM: team-1
+        VM_HOST_LOGIN: $VM_HOST_LOGIN_PROD
+        VM_HOST_IP: ""
+    - if: $CI_COMMIT_BRANCH == "develop"
+      variables:
+        TEAM: team-1
+        VM_HOST_LOGIN: $VM_HOST_LOGIN_DEV
+        VM_HOST_IP: "10.248.55.33"
