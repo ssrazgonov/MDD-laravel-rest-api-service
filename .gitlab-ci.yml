@@ -41,9 +41,9 @@ deploy:
       variables:
         TEAM: team-1
         VM_HOST_LOGIN: $VM_HOST_LOGIN_PROD
-        VM_HOST_IP: 
+        VM_HOST_IP: ""
     - if: $CI_COMMIT_BRANCH == "develop"
       variables:
         TEAM: team-1
         VM_HOST_LOGIN: $VM_HOST_LOGIN_DEV
-        VM_HOST_IP: 10.248.55.33
+        VM_HOST_IP: "10.248.55.33"
