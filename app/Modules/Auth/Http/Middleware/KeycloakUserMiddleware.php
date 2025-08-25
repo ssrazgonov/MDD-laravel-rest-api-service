@@ -25,7 +25,7 @@ class KeycloakUserMiddleware
             throw new AuthenticationException();
         }
 
-        $user = $this->userService->findOrCreateUser(new TokenDto(sub: $token->sub, email: $token->email));
+        $user = $this->userService->findOrCreateUser(new TokenDto(sub: $token->sub));
         
         auth()->setUser($user);
 

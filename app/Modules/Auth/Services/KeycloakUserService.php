@@ -17,7 +17,6 @@ class KeycloakUserService
 
         return User::create([
             'id' => $tokenData->sub,
-            'email' => $tokenData->email,
         ]);
     }
 }

@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('cards', function (Blueprint $table) {
             $table->id();
             $table->uuid('user_id');
-            $table->string('hash')->unique();
+            $table->string('hash');
             $table->string('last_digits', 4);
             $table->string('status')->default('active');
             $table->text('comment')->nullable();
