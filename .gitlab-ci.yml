@@ -36,8 +36,14 @@ sonarqube-check:
 
 deploy:
   extends: .deploy
-  variables:
-    # команда и сервер
-    TEAM: team-1
-    VM_HOST_IP_DEV: 10.248.55.33
-    VM_HOST_IP_PROD:
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+      variables:
+        TEAM: team-1
+        VM_HOST_LOGIN: $VM_HOST_LOGIN_PROD
+        VM_HOST_IP: 
+    - if: $CI_COMMIT_BRANCH == "develop"
+      variables:
+        TEAM: team-1
+        VM_HOST_LOGIN: $VM_HOST_LOGIN_DEV
+        VM_HOST_IP: 10.248.55.33
