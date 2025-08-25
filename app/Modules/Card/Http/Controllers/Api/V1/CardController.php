@@ -39,10 +39,10 @@ class CardController extends Controller
     /**
      * @response array{status: bool, error: array{error: string, code: int} , data: null}
      */
-    public function activate(ActivateCardRequest $request, ActivateCard $activateCard)
+    public function activate(int $id, ActivateCard $activateCard)
     {
         return response()->json()->api(
-            $activateCard->handleResult($activateCard(ActivateCardDto::fromArray($request->validated()))),
+            $activateCard->handleResult($activateCard(new ActivateCardDto(id: $id))),
             Response::HTTP_CREATED
         );
     }
@@ -50,9 +50,9 @@ class CardController extends Controller
     /**
      * @response array{status: bool, error: array{error: string, code: int} , data: null}
      */
-    public function deactivate(DeactivateCardRequest $request, DeactivateCard $deactivateCard) {
+    public function deactivate(int $id, DeactivateCard $deactivateCard) {
         return response()->json()->api(
-            $deactivateCard->handleResult($deactivateCard(DeactivateCardDto::fromArray($request->validated()))),
+            $deactivateCard->handleResult($deactivateCard(new DeactivateCardDto(id: $id))),
             Response::HTTP_CREATED
         ); 
     }
