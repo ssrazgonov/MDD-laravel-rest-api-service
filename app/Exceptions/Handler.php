@@ -2,6 +2,8 @@
 
 namespace App\Exceptions;
 
+use Illuminate\Auth\AuthenticationException;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
 use Throwable;
 use Illuminate\Http\JsonResponse;
@@ -29,6 +31,8 @@ class Handler extends ExceptionHandler
     private function getStatusCode(Throwable $exception): int
     {
         return match (true) {
+            $exception instanceof ModelNotFoundException => 404,
+            $exception instanceof AuthenticationException => 401,
             $exception instanceof RuntimeException => 400,
             default => 500
         };
