@@ -25,7 +25,7 @@ final readonly class DeactivateCard extends Action
         DB::beginTransaction();
 
         try {
-            $card = Card::findOrFail($dto->cardId);
+            $card = Card::findOrFail($dto->id);
 
             if ($card->status === CardStatus::INACTIVE) {
                 throw new DomainException('Карта уже деактивирована');

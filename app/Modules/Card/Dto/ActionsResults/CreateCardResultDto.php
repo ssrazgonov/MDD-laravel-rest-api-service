@@ -7,10 +7,4 @@ use App\Base\ErrorDto;
 use App\Modules\Card\Models\Card;
 
 class CreateCardResultDto extends ActionResultDto
-{
-    public function __construct(
-        public bool $status,
-        public ?ErrorDto $error = null,
-        public ?Card $card = null,
-    ){}
-}
+{}

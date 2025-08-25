@@ -27,7 +27,7 @@ final readonly class ActivateCard extends Action
         DB::beginTransaction();
 
         try {
-            $card = Card::findOrFail($dto->cardId);
+            $card = Card::findOrFail($dto->id);
 
             if ($card->status === CardStatus::ACTIVE) {
                 throw new DomainException('Карта уже активирована');
@@ -35,7 +35,7 @@ final readonly class ActivateCard extends Action
 
             if ($card->user->hasActiveCard()) {
                 $this->handleResult(($this->deactivateCard)(
-                    new DeactivateCardDto(cardId: $card->user->activeCard()->id)
+                    new DeactivateCardDto(id: $card->user->activeCard()->id)
                 ));
             }
 

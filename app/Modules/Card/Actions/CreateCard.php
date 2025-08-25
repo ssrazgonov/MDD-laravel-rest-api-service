@@ -46,7 +46,7 @@ final readonly class CreateCard extends Action
 
             if ($card->shouldAutoActivate()) {
                 $this->handleResult(($this->activateCard)(new ActivateCardDto(
-                    cardId: $card->id,
+                    id: $card->id,
                     comment: 'Карта создана и активирована'
                 )));
             } else {
@@ -67,7 +67,7 @@ final readonly class CreateCard extends Action
 
             DB::commit();
 
-            return new CreateCardResultDto(card: $card, status: true);
+            return new CreateCardResultDto(data: $card, status: true);
         } catch (Throwable $exception) {
             DB::rollBack();
             return new CreateCardResultDto(

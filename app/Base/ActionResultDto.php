@@ -7,8 +7,9 @@ use App\Contracts\ResultDto;
 abstract class ActionResultDto extends Dto implements ResultDto
 {
     public function __construct(
-        public bool $status,
-        public ?ErrorDto $error = null,
+        readonly public bool $status,
+        readonly public ?ErrorDto $error = null,
+        readonly public mixed $data = null,
     ){}
 
     public function hasError(): bool

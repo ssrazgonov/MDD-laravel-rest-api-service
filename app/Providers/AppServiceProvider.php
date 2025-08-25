@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Base\ActionResultDto;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Contracts\Debug\ExceptionHandler;
 use App\Exceptions\Handler;
@@ -26,7 +27,7 @@ class AppServiceProvider extends ServiceProvider
             return response()->json([
                 'status' => true,
                 'error' => null,
-                'data' => $data
+                'data' => $data instanceof ActionResultDto ? $data?->data : $data
             ], $code);
         });
 

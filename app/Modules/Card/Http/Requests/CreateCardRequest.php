@@ -14,7 +14,7 @@ class CreateCardRequest extends FormRequest
                 'string',
                 'regex:/^2[0-9]{15,18}$/',
             ],
-            'comment' => 'nullable|string|max:1000',
+            'comment' => 'nullable|string|max:256',
         ];
     }
 }

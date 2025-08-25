@@ -8,6 +8,7 @@ use App\Modules\Card\Actions\DeactivateCard;
 use App\Modules\Card\Dto\Actions\ActivateCardDto;
 use App\Modules\Card\Dto\Actions\CreateCardDto;
 use App\Modules\Card\Dto\Actions\DeactivateCardDto;
+use App\Modules\Card\Dto\ActionsResults\CreateCardResultDto;
 use App\Modules\Card\Http\Requests\ActivateCardRequest;
 use App\Modules\Card\Http\Requests\CreateCardRequest;
 use App\Modules\Card\Http\Requests\DeactivateCardRequest;
@@ -16,25 +17,29 @@ use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Foundation\Validation\ValidatesRequests;
 use Illuminate\Http\Response;
 use Illuminate\Routing\Controller;
+use App\Modules\Card\Models\Card;
 
 class CardController extends Controller
 {
     use AuthorizesRequests, DispatchesJobs, ValidatesRequests;
 
+    /**
+     * @response array{data: Card}
+     */
     public function store(CreateCardRequest $request, CreateCard $createCard)
     {
-        $data = $request->validated();
-        $data['user_id'] = auth()->user()->id;
+        $createCardData = $request->validated();
+        $createCardData['user_id'] = auth()->user()->id;
 
-        return response()->json(
-            $createCard->handleResult($createCard(CreateCardDto::fromArray($data))),
+        return response()->json()->api(
+            $createCard->handleResult($createCard(CreateCardDto::fromArray($createCardData))),
             Response::HTTP_CREATED
         );
     }
 
     public function activate(ActivateCardRequest $request, ActivateCard $activateCard)
     {
-        return response()->json(
+        return response()->json()->api(
             $activateCard->handleResult($activateCard(ActivateCardDto::fromArray($request->validated()))),
             Response::HTTP_CREATED
         );

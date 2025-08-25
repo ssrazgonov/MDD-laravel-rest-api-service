@@ -9,9 +9,10 @@ class ActivateCardRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'card_id' => [
+            'id' => [
                 'required',
-                'string',
+                'int',
+                'exists:cards'
             ],
         ];
     }
