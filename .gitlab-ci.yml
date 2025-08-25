@@ -10,10 +10,6 @@ variables:
   APP_CMD:
   # доп. флаги для docker run
   DOCKER_RUN_EXTRA_ARGS:
-  # команда и сервер
-  TEAM: team-1
-  VM_HOST_IP_DEV: 10.248.55.33
-  VM_HOST_IP_PROD:
 
 include:
   - project: 'devops-tools/gitlab-ci-templates/php'
@@ -40,3 +36,8 @@ sonarqube-check:
 
 deploy:
   extends: .deploy
+  variables:
+    # команда и сервер
+    TEAM: team-1
+    VM_HOST_IP_DEV: 10.248.55.33
+    VM_HOST_IP_PROD:
