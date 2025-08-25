@@ -23,8 +23,11 @@ class CardController extends Controller
 
     public function store(CreateCardRequest $request, CreateCard $createCard)
     {
+        $data = $request->validated();
+        $data['user_id'] = auth()->user()->id;
+
         return response()->json(
-            $createCard->handleResult($createCard(CreateCardDto::fromArray($request->validated()))),
+            $createCard->handleResult($createCard(CreateCardDto::fromArray($data))),
             Response::HTTP_CREATED
         );
     }

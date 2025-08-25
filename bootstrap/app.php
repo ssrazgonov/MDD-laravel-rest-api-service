@@ -1,5 +1,6 @@
 <?php
 
+use App\Modules\Auth\Http\Middleware\KeycloakUserMiddleware;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -11,7 +12,7 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        $middleware->append(KeycloakUserMiddleware::class);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

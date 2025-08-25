@@ -13,6 +13,11 @@ class User extends Authenticatable
 {
     use HasFactory, Notifiable;
 
+    public $fillable = [
+        'id',
+        'email',
+    ];
+
     public $incrementing = false;
 
     protected $keyType = 'string';

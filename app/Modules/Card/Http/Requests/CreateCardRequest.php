@@ -14,13 +14,7 @@ class CreateCardRequest extends FormRequest
                 'string',
                 'regex:/^2[0-9]{15,18}$/',
             ],
-            'user_id' => [
-                'required',
-                'string',
-                'exists:users,id'
-            ],
             'comment' => 'nullable|string|max:1000',
-
         ];
     }
 }
