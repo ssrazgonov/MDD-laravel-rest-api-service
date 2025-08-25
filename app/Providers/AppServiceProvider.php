@@ -7,6 +7,9 @@ use Illuminate\Support\ServiceProvider;
 use Illuminate\Contracts\Debug\ExceptionHandler;
 use App\Exceptions\Handler;
 use Illuminate\Http\JsonResponse;
+use Dedoc\Scramble\Scramble;
+use Dedoc\Scramble\Support\Generator\OpenApi;
+use Dedoc\Scramble\Support\Generator\SecurityScheme;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -41,5 +44,12 @@ class AppServiceProvider extends ServiceProvider
                 'data' => $data
             ], $code >= 400 && $code < 600 ? $code : 500);
         });
+
+        Scramble::configure()
+            ->withDocumentTransformers(function (OpenApi $openApi) {
+                $openApi->secure(
+                    SecurityScheme::http('bearer')
+                );
+            });
     }
 }

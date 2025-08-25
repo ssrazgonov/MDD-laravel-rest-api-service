@@ -8,7 +8,6 @@ use App\Modules\Card\Actions\DeactivateCard;
 use App\Modules\Card\Dto\Actions\ActivateCardDto;
 use App\Modules\Card\Dto\Actions\CreateCardDto;
 use App\Modules\Card\Dto\Actions\DeactivateCardDto;
-use App\Modules\Card\Dto\ActionsResults\CreateCardResultDto;
 use App\Modules\Card\Http\Requests\ActivateCardRequest;
 use App\Modules\Card\Http\Requests\CreateCardRequest;
 use App\Modules\Card\Http\Requests\DeactivateCardRequest;
@@ -24,7 +23,7 @@ class CardController extends Controller
     use AuthorizesRequests, DispatchesJobs, ValidatesRequests;
 
     /**
-     * @response array{data: Card}
+     * @response array{status: bool, error: array{error: string, code: int} , data: Card}
      */
     public function store(CreateCardRequest $request, CreateCard $createCard)
     {
@@ -37,6 +36,9 @@ class CardController extends Controller
         );
     }
 
+    /**
+     * @response array{status: bool, error: array{error: string, code: int} , data: null}
+     */
     public function activate(ActivateCardRequest $request, ActivateCard $activateCard)
     {
         return response()->json()->api(
@@ -45,6 +47,9 @@ class CardController extends Controller
         );
     }
 
+    /**
+     * @response array{status: bool, error: array{error: string, code: int} , data: null}
+     */
     public function deactivate(DeactivateCardRequest $request, DeactivateCard $deactivateCard) {
         return response()->json()->api(
             $deactivateCard->handleResult($deactivateCard(DeactivateCardDto::fromArray($request->validated()))),
