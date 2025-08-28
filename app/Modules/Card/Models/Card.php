@@ -6,6 +6,7 @@ use App\Modules\Card\Enums\CardStatus;
 use App\Modules\User\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Builder;
 
 class Card extends Model
 {
@@ -38,5 +39,15 @@ class Card extends Model
         return !static::where('user_id', $this->user_id)
             ->where('status', CardStatus::ACTIVE)
             ->exists();
+    }
+
+    public function scopeForUser(Builder $query, string $userId): Builder
+    {
+        return $query->where('user_id', $userId);
+    }
+
+    public function scopeStatusFilter(Builder $query, ?CardStatus $status): Builder
+    {
+        return $status ? $query->where('status', $status->value) : $query;
     }
 }
