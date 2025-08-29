@@ -19,6 +19,7 @@ use Illuminate\Foundation\Validation\ValidatesRequests;
 use Illuminate\Http\Response;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Auth;
+use App\Modules\Card\Models\Card;
 
 class CardController extends Controller
 {
