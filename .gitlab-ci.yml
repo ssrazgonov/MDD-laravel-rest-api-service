@@ -29,6 +29,10 @@ tests:
   extends: .tests
   allow_failure: true
   image: ${NEXUS}/php/base:8.4
+  before_script:
+    - cp ${ENV_TEST} ./.env
+    - composer install --no-interaction --prefer-dist
+    - php artisan test
 
 sonarqube-check:
   extends: .sonarqube-check
