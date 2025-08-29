@@ -33,6 +33,8 @@ tests:
     - cp ${ENV_TEST} ./.env
     - composer install --no-interaction --prefer-dist
     - php artisan test
+  script:
+    - echo "Окончание тестов"
 
 sonarqube-check:
   extends: .sonarqube-check
