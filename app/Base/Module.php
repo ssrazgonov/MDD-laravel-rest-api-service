@@ -61,7 +61,7 @@ abstract class Module implements ModuleContract
         $routesPath = $this->path . '/Http/routes.php';
         
         if (file_exists($routesPath)) {
-            require_once $routesPath;
+            app('router')->group([], $routesPath);
         }
     }
 

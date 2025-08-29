@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
 use Throwable;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Validation\ValidationException;
 use RuntimeException;
 
 class Handler extends ExceptionHandler
@@ -34,6 +35,7 @@ class Handler extends ExceptionHandler
             $exception instanceof ModelNotFoundException => 404,
             $exception instanceof AuthenticationException => 401,
             $exception instanceof RuntimeException => 400,
+            $exception instanceof ValidationException => 400,
             default => 500
         };
     }
