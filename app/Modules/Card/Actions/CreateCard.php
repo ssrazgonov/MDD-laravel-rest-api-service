@@ -33,7 +33,7 @@ final readonly class CreateCard extends Action
             $hashedPan = hash('sha256', $createCardActionDto->pan);
 
             if (Card::existsForUserWithHash($createCardActionDto->userId, $hashedPan)) {
-                throw new \DomainException("Эта карта уже добавлена в ваш профиль.", 409);
+                throw new \DomainException("Эта карта уже добавлена в ваш профиль.", 422);
             }
 
             $card = Card::create([
@@ -70,10 +70,11 @@ final readonly class CreateCard extends Action
             return new CreateCardResultDto(data: $card, status: true);
         } catch (Throwable $exception) {
             DB::rollBack();
-            return new CreateCardResultDto(
+            $result = new CreateCardResultDto(
                 error: new ErrorDto(error: $exception->getMessage(), code: $exception->getCode()),
                 status: false
             );
+            return $result;
         }
     }
 }

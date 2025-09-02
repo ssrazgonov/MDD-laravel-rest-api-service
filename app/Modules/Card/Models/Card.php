@@ -29,9 +29,11 @@ class Card extends Model
 
     public static function existsForUserWithHash(string $userId, string $hashedPan): bool
     {
-        return self::where('user_id', $userId)
+        $exists = self::where('user_id', $userId)
             ->where('hash', $hashedPan)
             ->exists();
+
+        return $exists;
     }
 
     public function shouldAutoActivate(): bool

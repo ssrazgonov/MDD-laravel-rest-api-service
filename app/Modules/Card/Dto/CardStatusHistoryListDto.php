@@ -9,5 +9,7 @@ class CardStatusHistoryListDto extends Dto
 {
     public function __construct(
         public ?Collection $data = null,
-    ) {}
+    ) {
+        parent::__construct([]);
+    }
 }

@@ -6,5 +6,8 @@ use App\Base\Dto;
 
 class GetCardStatusHistoryDto extends Dto
 {
-    public string $cardId;
+    public function __construct(public string $cardId)
+    {
+        parent::__construct([]);
+    }
 }

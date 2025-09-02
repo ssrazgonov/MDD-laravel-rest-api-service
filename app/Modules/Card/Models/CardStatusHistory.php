@@ -18,7 +18,6 @@ class CardStatusHistory extends Model
     ];
 
     protected $casts = [
-        'changed_at' => 'datetime',
         'status' => CardStatus::class,
     ];
 

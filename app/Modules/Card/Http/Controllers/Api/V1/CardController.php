@@ -5,10 +5,12 @@ namespace App\Modules\Card\Http\Controllers\Api\V1;
 use App\Modules\Card\Actions\ActivateCard;
 use App\Modules\Card\Actions\CreateCard;
 use App\Modules\Card\Actions\DeactivateCard;
+use App\Modules\Card\Actions\GetCardWithHistory;
 use App\Modules\Card\Actions\GetUserCards;
 use App\Modules\Card\Dto\Actions\ActivateCardDto;
 use App\Modules\Card\Dto\Actions\CreateCardDto;
 use App\Modules\Card\Dto\Actions\DeactivateCardDto;
+use App\Modules\Card\Dto\Actions\GetCardWithHistoryDto;
 use App\Modules\Card\Dto\Actions\GetUserCardsDto;
 use App\Modules\Card\Enums\CardStatus;
 use App\Modules\Card\Http\Requests\CreateCardRequest;
@@ -44,12 +46,18 @@ class CardController extends Controller
     public function store(CreateCardRequest $request, CreateCard $createCard)
     {
         $createCardData = $request->validated();
-        $createCardData['user_id'] = Auth::id();
+        $userId = Auth::id();
+        $createCardData['user_id'] = $userId;
 
-        return response()->json()->api(
-            $createCard->handleResult($createCard(CreateCardDto::fromArray($createCardData))),
-            Response::HTTP_CREATED
-        );
+        $result = $createCard(CreateCardDto::fromArray($createCardData));
+
+        $statusCode = $result->hasError() ? ($result->getError()->code ?? Response::HTTP_BAD_REQUEST) : Response::HTTP_CREATED;
+
+        return response()->json([
+            'status' => $result->status,
+            'error' => $result->error,
+            'data' => $result->data
+        ], $statusCode);
     }
 
     /**
@@ -72,5 +80,21 @@ class CardController extends Controller
             $deactivateCard->handleResult($deactivateCard(new DeactivateCardDto(id: $id, user: Auth::user()))),
             Response::HTTP_CREATED
         );
+    }
+
+    /**
+     * @response array{status: bool, error: array{error: string, code: int} , data: array{card: Card, history: CardStatusHistory[]}}
+     */
+    public function show(int $id, GetCardWithHistory $getCardWithHistory)
+    {
+        $result = $getCardWithHistory(new GetCardWithHistoryDto(id: $id, user: Auth::user()));
+
+        $statusCode = $result->hasError() ? ($result->getError()->code ?? Response::HTTP_BAD_REQUEST) : Response::HTTP_OK;
+
+        return response()->json([
+            'status' => $result->status,
+            'error' => $result->error,
+            'data' => $result->data
+        ], $statusCode);
     }
 }

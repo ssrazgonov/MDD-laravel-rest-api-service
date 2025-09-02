@@ -10,5 +10,7 @@ class CreateCardDto extends Dto
         public string $userId,
         public string $pan,
         public ?string $comment,
-    ){}
+    ) {
+        parent::__construct([]);
+    }
 }

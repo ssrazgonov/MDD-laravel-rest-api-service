@@ -48,26 +48,29 @@ it('cannot create card with bad pan number', function () {
 });
 
 it('cannot create same card for user', function () {
-    $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
+    $firstResponse = $this->withHeader('Authorization', 'Bearer ' . $this->token)
     ->postJson('/api/v1/cards', [
         'pan' => '2234567891234567',
     ]);
 
-    $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
+    $firstResponse->assertStatus(201);
+
+    $secondResponse = $this->withHeader('Authorization', 'Bearer ' . $this->token)
     ->postJson('/api/v1/cards', [
         'pan' => '2234567891234567',
     ]);
 
-    $response->assertStatus(400)
+    $secondResponse->assertStatus(422)
         ->assertJsonStructure([
             'status',
             'error',
             'data' => []
         ]);
 
-    $response->assertJson([
+    $secondResponse->assertJson([
             'error' => [
-                'message' => 'Эта карта уже добавлена в ваш профиль.'
+                'error' => 'Эта карта уже добавлена в ваш профиль.',
+                'code' => 422
             ],
         ]);
 });
@@ -144,7 +147,7 @@ it('can get user cards list', function () {
                     'status',
                     'comment',
                     'created_at',
-                    'updated_at'
+                    'updated_at',
                 ]
             ]
         ]);
@@ -172,7 +175,7 @@ it('can get user cards with active status filter', function () {
                     'status',
                     'comment',
                     'created_at',
-                    'updated_at'
+                    'updated_at',
                 ]
             ]
         ]);
@@ -493,7 +496,7 @@ it('can get user cards with null status filter', function () {
                     'status',
                     'comment',
                     'created_at',
-                    'updated_at'
+                    'updated_at',
                 ]
             ]
         ]);
@@ -559,7 +562,7 @@ it('rejects comment with special characters', function () {
                 'status',
                 'comment',
                 'created_at',
-                'updated_at'
+                'updated_at',
             ]
         ]);
 });
@@ -652,7 +655,7 @@ it('validates comment field with exact max length', function () {
                 'status',
                 'comment',
                 'created_at',
-                'updated_at'
+                'updated_at',
             ]
         ]);
 });
@@ -721,6 +724,75 @@ it('can deactivate card with manage access', function () {
         ->postJson("/api/v1/cards/{$cardId}/deactivate");
 
     $response->assertStatus(201)
+        ->assertJsonStructure([
+            'status',
+            'error',
+            'data' => []
+        ]);
+});
+
+it('can get card with status history', function () {
+    $createResponse = $this->withHeader('Authorization', 'Bearer ' . $this->token)
+        ->postJson('/api/v1/cards', [
+            'pan' => '2234567891234590',
+        ]);
+
+    $cardId = $createResponse->json('data.id');
+
+    $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
+        ->getJson("/api/v1/cards/{$cardId}");
+
+    $response->assertStatus(200)
+        ->assertJsonStructure([
+            'status',
+            'error',
+            'data' => [
+                'card' => [
+                    'id',
+                    'user_id',
+                    'hash',
+                    'last_digits',
+                    'status',
+                    'comment',
+                    'created_at',
+                    'updated_at'
+                ],
+                'history' => [
+                    '*' => [
+                        'id',
+                        'card_id',
+                        'status',
+                        'comment',
+                        'created_at',
+                        'updated_at'
+                    ]
+                ]
+            ]
+        ]);
+});
+
+it('cannot get non-existent card', function () {
+    $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
+        ->getJson('/api/v1/cards/99999');
+
+    $response->assertStatus(404)
+        ->assertJsonStructure([
+            'status',
+            'error',
+            'data'
+        ])
+        ->assertJson([
+            'data' => [
+                'card' => null,
+                'history' => null
+            ]
+        ]);
+});
+
+it('cannot get card without authentication', function () {
+    $response = $this->getJson('/api/v1/cards/1');
+    
+    $response->assertStatus(401)
         ->assertJsonStructure([
             'status',
             'error',
