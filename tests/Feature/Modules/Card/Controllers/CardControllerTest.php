@@ -38,17 +38,12 @@ it('cannot create card with bad pan number', function () {
         'pan' => '1234567891234567',
     ]);
 
-    $response->assertStatus(400)
+    $response->assertStatus(422)
         ->assertJsonStructure([
-            'status',
-            'error',
-            'data' => []
-        ]);
-
-    $response->assertJson([
-            'error' => [
-                'message' => 'The pan field format is invalid.'
-            ],
+            'message',
+            'errors' => [
+                'pan'
+            ]
         ]);
 });
 
@@ -220,6 +215,9 @@ it('can activate existing card', function () {
 
     $cardId = $createResponse->json('data.id');
 
+    $this->withHeader('Authorization', 'Bearer ' . $this->token)
+        ->postJson("/api/v1/cards/{$cardId}/deactivate");
+
     $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
         ->postJson("/api/v1/cards/{$cardId}/activate");
 
@@ -335,6 +333,326 @@ it('validates comment field length', function () {
             'message',
             'errors' => [
                 'comment'
+            ]
+        ]);
+});
+
+it('rejects pan with invalid starting digit', function () {
+    $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
+        ->postJson('/api/v1/cards', [
+            'pan' => '1234567891234567',
+        ]);
+
+    $response->assertStatus(422)
+        ->assertJsonStructure([
+            'message',
+            'errors' => [
+                'pan'
+            ]
+        ]);
+});
+
+it('rejects pan with non-numeric characters', function () {
+    $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
+        ->postJson('/api/v1/cards', [
+            'pan' => '223456789123456a',
+        ]);
+
+    $response->assertStatus(422)
+        ->assertJsonStructure([
+            'message',
+            'errors' => [
+                'pan'
+            ]
+        ]);
+});
+
+it('rejects invalid pan format with special characters', function () {
+    $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
+        ->postJson('/api/v1/cards', [
+            'pan' => '223456789123456A',
+        ]);
+
+    $response->assertStatus(422)
+        ->assertJsonStructure([
+            'message',
+            'errors' => [
+                'pan'
+            ]
+        ]);
+});
+
+it('rejects pan that is too short', function () {
+    $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
+        ->postJson('/api/v1/cards', [
+            'pan' => '223456789123456',
+        ]);
+
+    $response->assertStatus(422)
+        ->assertJsonStructure([
+            'message',
+            'errors' => [
+                'pan'
+            ]
+        ]);
+});
+
+it('rejects pan that is too long', function () {
+    $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
+        ->postJson('/api/v1/cards', [
+            'pan' => '22345678912345678901',
+        ]);
+
+    $response->assertStatus(422)
+        ->assertJsonStructure([
+            'message',
+            'errors' => [
+                'pan'
+            ]
+        ]);
+});
+
+it('rejects missing pan field', function () {
+    $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
+        ->postJson('/api/v1/cards', [
+            'comment' => 'Test comment'
+        ]);
+
+    $response->assertStatus(422)
+        ->assertJsonStructure([
+            'message',
+            'errors' => [
+                'pan'
+            ]
+        ]);
+});
+
+it('can create card without comment', function () {
+    $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
+        ->postJson('/api/v1/cards', [
+            'pan' => '2234567891234575',
+        ]);
+
+    $response->assertStatus(201)
+        ->assertJsonStructure([
+            'status',
+            'error',
+            'data' => [
+                'id',
+                'user_id',
+                'hash',
+                'last_digits',
+                'status',
+                'comment',
+                'created_at',
+                'updated_at'
+            ]
+        ])
+        ->assertJson([
+            'data' => [
+                'last_digits' => '4575',
+                'comment' => null
+            ]
+        ]);
+});
+
+it('rejects empty pan field', function () {
+    $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
+        ->postJson('/api/v1/cards', [
+            'pan' => '',
+        ]);
+
+    $response->assertStatus(422)
+        ->assertJsonStructure([
+            'message',
+            'errors' => [
+                'pan'
+            ]
+        ]);
+});
+
+it('can get user cards with null status filter', function () {
+    $this->withHeader('Authorization', 'Bearer ' . $this->token)
+        ->postJson('/api/v1/cards', [
+            'pan' => '2234567891234576',
+        ]);
+
+    $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
+        ->getJson('/api/v1/cards?status=');
+
+    $response->assertStatus(201)
+        ->assertJsonStructure([
+            'status',
+            'error',
+            'data' => [
+                '*' => [
+                    'id',
+                    'user_id',
+                    'hash',
+                    'last_digits',
+                    'status',
+                    'comment',
+                    'created_at',
+                    'updated_at'
+                ]
+            ]
+        ]);
+});
+
+it('cannot activate already active card', function () {
+    $createResponse = $this->withHeader('Authorization', 'Bearer ' . $this->token)
+        ->postJson('/api/v1/cards', [
+            'pan' => '2234567891234577',
+        ]);
+
+    $cardId = $createResponse->json('data.id');
+
+    $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
+        ->postJson("/api/v1/cards/{$cardId}/activate");
+
+    $response->assertStatus(400)
+        ->assertJsonStructure([
+            'status',
+            'error',
+            'data' => []
+        ]);
+});
+
+it('cannot deactivate already inactive card', function () {
+    $createResponse = $this->withHeader('Authorization', 'Bearer ' . $this->token)
+        ->postJson('/api/v1/cards', [
+            'pan' => '2234567891234578',
+        ]);
+
+    $cardId = $createResponse->json('data.id');
+
+    $this->withHeader('Authorization', 'Bearer ' . $this->token)
+        ->postJson("/api/v1/cards/{$cardId}/deactivate");
+
+    $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
+        ->postJson("/api/v1/cards/{$cardId}/deactivate");
+
+    $response->assertStatus(400)
+        ->assertJsonStructure([
+            'status',
+            'error',
+            'data' => []
+        ]);
+});
+
+it('rejects comment with special characters', function () {
+    $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
+        ->postJson('/api/v1/cards', [
+            'pan' => '2234567891234581',
+            'comment' => 'Test comment with <script>alert("xss")</script>'
+        ]);
+
+    $response->assertStatus(201)
+        ->assertJsonStructure([
+            'status',
+            'error',
+            'data' => [
+                'id',
+                'user_id',
+                'hash',
+                'last_digits',
+                'status',
+                'comment',
+                'created_at',
+                'updated_at'
+            ]
+        ]);
+});
+
+it('can get user cards with multiple requests', function () {
+    $this->withHeader('Authorization', 'Bearer ' . $this->token)
+        ->postJson('/api/v1/cards', [
+            'pan' => '2234567891234582',
+        ]);
+
+    $response1 = $this->withHeader('Authorization', 'Bearer ' . $this->token)
+        ->getJson('/api/v1/cards?status=active');
+
+    $response2 = $this->withHeader('Authorization', 'Bearer ' . $this->token)
+        ->getJson('/api/v1/cards?status=inactive');
+
+    $response1->assertStatus(201);
+    $response2->assertStatus(201);
+});
+
+it('rejects pan with leading zeros', function () {
+    $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
+        ->postJson('/api/v1/cards', [
+            'pan' => '0234567891234567',
+        ]);
+
+    $response->assertStatus(422)
+        ->assertJsonStructure([
+            'message',
+            'errors' => [
+                'pan'
+            ]
+        ]);
+});
+
+it('rejects pan with spaces', function () {
+    $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
+        ->postJson('/api/v1/cards', [
+            'pan' => '223456789123456 7',
+        ]);
+
+    $response->assertStatus(422)
+        ->assertJsonStructure([
+            'message',
+            'errors' => [
+                'pan'
+            ]
+        ]);
+});
+
+it('can create multiple cards for user', function () {
+    $response1 = $this->withHeader('Authorization', 'Bearer ' . $this->token)
+        ->postJson('/api/v1/cards', [
+            'pan' => '2234567891234583',
+        ]);
+
+    $response2 = $this->withHeader('Authorization', 'Bearer ' . $this->token)
+        ->postJson('/api/v1/cards', [
+            'pan' => '2234567891234584',
+        ]);
+
+    $response1->assertStatus(201);
+    $response2->assertStatus(201);
+
+    $listResponse = $this->withHeader('Authorization', 'Bearer ' . $this->token)
+        ->getJson('/api/v1/cards');
+
+    $listResponse->assertStatus(201)
+        ->assertJsonCount(2, 'data');
+});
+
+it('validates comment field with exact max length', function () {
+    $maxComment = str_repeat('a', 256);
+
+    $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
+        ->postJson('/api/v1/cards', [
+            'pan' => '2234567891234585',
+            'comment' => $maxComment
+        ]);
+
+    $response->assertStatus(201)
+        ->assertJsonStructure([
+            'status',
+            'error',
+            'data' => [
+                'id',
+                'user_id',
+                'hash',
+                'last_digits',
+                'status',
+                'comment',
+                'created_at',
+                'updated_at'
             ]
         ]);
 });
