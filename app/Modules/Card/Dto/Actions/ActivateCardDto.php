@@ -8,6 +8,7 @@ class ActivateCardDto extends Dto
 {
     public function __construct(
         public int $id,
-        public ?string $comment = null
+        public ?string $comment = null,
+        public ?\App\Modules\User\Models\User $user = null
     ){}
 }

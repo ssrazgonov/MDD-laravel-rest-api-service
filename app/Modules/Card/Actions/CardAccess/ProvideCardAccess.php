@@ -17,7 +17,9 @@ final readonly class ProvideCardAccess extends Action
                 'user_id' => $provideCardAccessDto->userId,
             ],
             [
-                
+                'access_level' => $provideCardAccessDto->level,
+                'created_at' => now(),
+                'updated_at' => now(),
             ]
         );
 

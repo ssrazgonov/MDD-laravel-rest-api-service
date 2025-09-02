@@ -656,3 +656,74 @@ it('validates comment field with exact max length', function () {
             ]
         ]);
 });
+it('cannot activate card without manage access', function () {
+    $createResponse = $this->withHeader('Authorization', 'Bearer ' . $this->token)
+        ->postJson('/api/v1/cards', [
+            'pan' => '2234567891234586',
+        ]);
+
+    $cardId = $createResponse->json('data.id');
+
+    $this->withHeader('Authorization', 'Bearer ' . $this->token)
+        ->postJson("/api/v1/cards/{$cardId}/deactivate");
+
+    $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
+        ->postJson("/api/v1/cards/{$cardId}/activate");
+
+    $response->assertStatus(201);
+});
+
+it('cannot deactivate card without manage access', function () {
+    $createResponse = $this->withHeader('Authorization', 'Bearer ' . $this->token)
+        ->postJson('/api/v1/cards', [
+            'pan' => '2234567891234587',
+        ]);
+
+    $cardId = $createResponse->json('data.id');
+
+    $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
+        ->postJson("/api/v1/cards/{$cardId}/deactivate");
+
+    $response->assertStatus(201);
+});
+
+it('can activate card with manage access', function () {
+    $createResponse = $this->withHeader('Authorization', 'Bearer ' . $this->token)
+        ->postJson('/api/v1/cards', [
+            'pan' => '2234567891234588',
+        ]);
+
+    $cardId = $createResponse->json('data.id');
+
+    $this->withHeader('Authorization', 'Bearer ' . $this->token)
+        ->postJson("/api/v1/cards/{$cardId}/deactivate");
+
+    $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
+        ->postJson("/api/v1/cards/{$cardId}/activate");
+
+    $response->assertStatus(201)
+        ->assertJsonStructure([
+            'status',
+            'error',
+            'data' => []
+        ]);
+});
+
+it('can deactivate card with manage access', function () {
+    $createResponse = $this->withHeader('Authorization', 'Bearer ' . $this->token)
+        ->postJson('/api/v1/cards', [
+            'pan' => '2234567891234589',
+        ]);
+
+    $cardId = $createResponse->json('data.id');
+
+    $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
+        ->postJson("/api/v1/cards/{$cardId}/deactivate");
+
+    $response->assertStatus(201)
+        ->assertJsonStructure([
+            'status',
+            'error',
+            'data' => []
+        ]);
+});

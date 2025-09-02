@@ -39,6 +39,10 @@ class CardAccessControl extends Model
 
     public static function canUserManageCard(User $user, Card $card): bool
     {
+        if ($card->user_id === $user->id) {
+            return true;
+        }
+        
         return self::where('card_id', $card->id)
             ->where('user_id', $user->id)
             ->where('access_level', CardAccessLevel::MANAGE)
@@ -47,6 +51,10 @@ class CardAccessControl extends Model
 
     public static function canUserViewCard(User $user, Card $card): bool
     {
+        if ($card->user_id === $user->id) {
+            return true;
+        }
+        
         return self::where('card_id', $card->id)
             ->where('user_id', $user->id)
             ->whereIn('access_level', [CardAccessLevel::VIEW, CardAccessLevel::MANAGE])

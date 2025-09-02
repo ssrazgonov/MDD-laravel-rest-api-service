@@ -29,6 +29,10 @@ final readonly class ActivateCard extends Action
         try {
             $card = Card::findOrFail($dto->id);
 
+            if ($dto->user && !\App\Modules\Card\Models\CardAccessControl::canUserManageCard($dto->user, $card)) {
+                throw new DomainException('У вас нет прав для управления этой картой');
+            }
+
             if ($card->status === CardStatus::ACTIVE) {
                 throw new DomainException('Карта уже активирована');
             }

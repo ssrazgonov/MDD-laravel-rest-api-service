@@ -58,7 +58,7 @@ class CardController extends Controller
     public function activate(int $id, ActivateCard $activateCard)
     {
         return response()->json()->api(
-            $activateCard->handleResult($activateCard(new ActivateCardDto(id: $id))),
+            $activateCard->handleResult($activateCard(new ActivateCardDto(id: $id, user: Auth::user()))),
             Response::HTTP_CREATED
         );
     }
@@ -69,7 +69,7 @@ class CardController extends Controller
     public function deactivate(int $id, DeactivateCard $deactivateCard)
     {
         return response()->json()->api(
-            $deactivateCard->handleResult($deactivateCard(new DeactivateCardDto(id: $id))),
+            $deactivateCard->handleResult($deactivateCard(new DeactivateCardDto(id: $id, user: Auth::user()))),
             Response::HTTP_CREATED
         );
     }
