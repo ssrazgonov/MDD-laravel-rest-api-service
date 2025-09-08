@@ -8,13 +8,16 @@ use App\Modules\Card\Dto\Actions\GetCardWithHistoryDto;
 use App\Modules\Card\Dto\ActionsResults\GetCardWithHistoryResultDto;
 use App\Modules\Card\Models\Card;
 use App\Modules\Card\Models\CardAccessControl;
-use DomainException;
 use Throwable;
+use App\Modules\Card\Actions\StatusHistory\GetCardStatusHistory;
+use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
+use App\Modules\Card\Dto\Actions\StatusHistory\GetCardStatusHistoryDto;
 
-final readonly class GetCardWithHistory extends Action
+final class GetCardWithHistory extends Action
 {
     public function __construct(
-        readonly private \App\Modules\Card\Actions\StatusHistory\GetCardStatusHistory $getCardStatusHistory,
+        readonly private GetCardStatusHistory $getCardStatusHistory,
     ) {}
 
     public function __invoke(GetCardWithHistoryDto $dto): GetCardWithHistoryResultDto
@@ -23,10 +26,10 @@ final readonly class GetCardWithHistory extends Action
             $card = Card::findOrFail($dto->id);
 
             if ($dto->user && !CardAccessControl::canUserViewCard($dto->user, $card)) {
-                throw new DomainException('У вас нет прав для просмотра этой карты');
+                throw new AuthorizationException(__('card::errors.card_access_denied'), 403);
             }
 
-            $historyDto = ($this->getCardStatusHistory)(\App\Modules\Card\Dto\Actions\StatusHistory\GetCardStatusHistoryDto::fromArray([
+            $historyDto = ($this->getCardStatusHistory)(GetCardStatusHistoryDto::fromArray([
                 'cardId' => $card->id
             ]));
 
@@ -37,11 +40,11 @@ final readonly class GetCardWithHistory extends Action
                     'history' => $historyDto->data
                 ]
             );
-        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $exception) {
+        } catch (ModelNotFoundException $exception) {
             return new GetCardWithHistoryResultDto(
                 status: false,
                 error: new ErrorDto(
-                    error: 'Карта не найдена',
+                    error: __('card::errors.card_not_found'),
                     code: 404
                 ),
                 data: [

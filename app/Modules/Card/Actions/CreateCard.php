@@ -17,7 +17,7 @@ use Illuminate\Support\Facades\DB;
 use App\Modules\Card\Dto\Actions\StatusHistory\CreateCardStatusHistoryDto;
 use Throwable;
 
-final readonly class CreateCard extends Action
+final class CreateCard extends Action
 {
     public function __construct(
         readonly private ProvideCardAccess $provideCardAccess,
@@ -33,7 +33,7 @@ final readonly class CreateCard extends Action
             $hashedPan = hash('sha256', $createCardActionDto->pan);
 
             if (Card::existsForUserWithHash($createCardActionDto->userId, $hashedPan)) {
-                throw new \DomainException("Эта карта уже добавлена в ваш профиль.", 422);
+                throw new \DomainException(__('card::errors.already_exists'), 400);
             }
 
             $card = Card::create([
@@ -47,11 +47,11 @@ final readonly class CreateCard extends Action
             if ($card->shouldAutoActivate()) {
                 $this->handleResult(($this->activateCard)(new ActivateCardDto(
                     id: $card->id,
-                    comment: 'Карта создана и активирована'
+                    comment: __('card::messages.created_with_activate')
                 )));
             } else {
                 $this->handleResult(($this->createCardStatusHistory)(
-                    new CreateCardStatusHistoryDto(card: $card, comment: 'Карта создана')
+                    new CreateCardStatusHistoryDto(card: $card, comment: __('card::messages.created'))
                 ));
             }
 
@@ -70,11 +70,10 @@ final readonly class CreateCard extends Action
             return new CreateCardResultDto(data: $card, status: true);
         } catch (Throwable $exception) {
             DB::rollBack();
-            $result = new CreateCardResultDto(
+            return new CreateCardResultDto(
                 error: new ErrorDto(error: $exception->getMessage(), code: $exception->getCode()),
                 status: false
             );
-            return $result;
         }
     }
 }

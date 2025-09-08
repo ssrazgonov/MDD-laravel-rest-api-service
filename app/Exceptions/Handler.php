@@ -14,13 +14,7 @@ class Handler extends ExceptionHandler
 {
     public function render($request, Throwable $exception)
     {
-        if ($request->expectsJson() || $request->is('api/*')) {
-            if ($exception instanceof ValidationException) {
-                if ($this->shouldUseDefaultValidationResponse($exception)) {
-                    return parent::render($request, $exception);
-                }
-            }
-            
+        if ($request->expectsJson() || $request->is('api/*')) {     
             return $this->renderApiException($exception);
         }
 
@@ -35,36 +29,15 @@ class Handler extends ExceptionHandler
         );
     }
 
-    private function shouldUseDefaultValidationResponse(ValidationException $exception): bool
-    {
-        $errors = $exception->errors();
-        
-        foreach ($errors as $field => $messages) {
-            if (in_array($field, ['status', 'comment', 'pan'])) {
-                return true;
-            }
-        }
-        
-        return false;
-    }
-
     private function getStatusCode(Throwable $exception): int
     {
         return match (true) {
             $exception instanceof ModelNotFoundException => 404,
             $exception instanceof AuthenticationException => 401,
-            $exception instanceof RuntimeException => 400,
-            $exception instanceof ValidationException => $this->getValidationStatusCode($exception),
+            $exception instanceof RuntimeException => $exception->getCode(),
+            $exception instanceof ValidationException => 400,
             default => 500
         };
     }
-    
-    private function getValidationStatusCode(ValidationException $exception): int
-    {
-        if ($this->shouldUseDefaultValidationResponse($exception)) {
-            return 422;
-        }
-        
-        return 400;
-    }
+
 }

@@ -14,8 +14,12 @@ use Illuminate\Support\Facades\DB;
 use App\Modules\Card\Models\Card;
 use DomainException;
 use Throwable;
+use Illuminate\Auth\Access\AuthorizationException;
+use App\Modules\Card\Models\CardAccessControl;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 
-final readonly class ActivateCard extends Action
+
+final class ActivateCard extends Action
 {
     public function __construct(
         readonly private CreateCardStatusHistory $createCardStatusHistory,
@@ -29,12 +33,12 @@ final readonly class ActivateCard extends Action
         try {
             $card = Card::findOrFail($dto->id);
 
-            if ($dto->user && !\App\Modules\Card\Models\CardAccessControl::canUserManageCard($dto->user, $card)) {
-                throw new DomainException('У вас нет прав для управления этой картой');
+            if ($dto->user && !CardAccessControl::canUserManageCard($dto->user, $card)) {
+                throw new AuthorizationException(__('card::errors.card_access_denied'), 403);
             }
 
             if ($card->status === CardStatus::ACTIVE) {
-                throw new DomainException('Карта уже активирована');
+                throw new DomainException(__('card::errors.already_activated'), 400);
             }
 
             if ($card->user->hasActiveCard()) {
@@ -54,6 +58,14 @@ final readonly class ActivateCard extends Action
             DB::commit();
 
             return new ActivateCardResultDto(status: true);
+        } catch (ModelNotFoundException $exception) {
+            return new ActivateCardResultDto(
+                status: false,
+                error: new ErrorDto(
+                    error: __('card::errors.card_not_found'),
+                    code: 404
+                ),
+            );
         } catch (Throwable $excepion) {
             DB::rollBack();
             return new ActivateCardResultDto(

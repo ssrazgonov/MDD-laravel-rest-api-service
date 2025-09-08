@@ -7,7 +7,7 @@ use App\Modules\Card\Dto\Actions\StatusHistory\GetCardStatusHistoryDto;
 use App\Modules\Card\Dto\CardStatusHistoryListDto;
 use App\Modules\Card\Models\CardStatusHistory;
 
-final readonly class GetCardStatusHistory extends Action
+final class GetCardStatusHistory extends Action
 {
     public function __invoke(GetCardStatusHistoryDto $getCardStatusHistoryDto): CardStatusHistoryListDto
     {

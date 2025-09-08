@@ -7,7 +7,7 @@ use App\Modules\Card\Dto\Actions\GetUserCardsDto;
 use App\Modules\Card\Dto\ActionsResults\GetUserCardsResultDto;
 use App\Modules\Card\Models\Card;
 
-final readonly class GetUserCards extends Action
+final class GetUserCards extends Action
 {
     public function __invoke(GetUserCardsDto $dto): GetUserCardsResultDto
     {

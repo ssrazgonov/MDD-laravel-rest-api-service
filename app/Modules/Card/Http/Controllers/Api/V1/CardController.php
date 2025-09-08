@@ -21,7 +21,6 @@ use Illuminate\Foundation\Validation\ValidatesRequests;
 use Illuminate\Http\Response;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Auth;
-use App\Modules\Card\Models\Card;
 
 class CardController extends Controller
 {
@@ -36,7 +35,7 @@ class CardController extends Controller
 
         return response()->json()->api(
             $getUserCards->handleResult($getUserCards($dto)),
-            Response::HTTP_CREATED
+            Response::HTTP_OK
         );
     }
 
@@ -49,15 +48,10 @@ class CardController extends Controller
         $userId = Auth::id();
         $createCardData['user_id'] = $userId;
 
-        $result = $createCard(CreateCardDto::fromArray($createCardData));
-
-        $statusCode = $result->hasError() ? ($result->getError()->code ?? Response::HTTP_BAD_REQUEST) : Response::HTTP_CREATED;
-
-        return response()->json([
-            'status' => $result->status,
-            'error' => $result->error,
-            'data' => $result->data
-        ], $statusCode);
+        return response()->json()->api(
+            $createCard->handleResult($createCard(CreateCardDto::fromArray($createCardData))),
+            Response::HTTP_CREATED
+        );
     }
 
     /**
@@ -87,14 +81,8 @@ class CardController extends Controller
      */
     public function show(int $id, GetCardWithHistory $getCardWithHistory)
     {
-        $result = $getCardWithHistory(new GetCardWithHistoryDto(id: $id, user: Auth::user()));
-
-        $statusCode = $result->hasError() ? ($result->getError()->code ?? Response::HTTP_BAD_REQUEST) : Response::HTTP_OK;
-
-        return response()->json([
-            'status' => $result->status,
-            'error' => $result->error,
-            'data' => $result->data
-        ], $statusCode);
+        return response()->json()->api(
+            $getCardWithHistory->handleResult($getCardWithHistory(new GetCardWithHistoryDto(id: $id, user: Auth::user()))),
+            Response::HTTP_OK,);
     }
 }

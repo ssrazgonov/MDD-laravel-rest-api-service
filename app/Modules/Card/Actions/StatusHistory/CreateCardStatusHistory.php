@@ -9,7 +9,7 @@ use App\Modules\Card\Dto\ActionsResults\StatusHistory\CreateCardStatusHistoryRes
 use App\Modules\Card\Models\CardStatusHistory;
 use Throwable;
 
-final readonly class CreateCardStatusHistory extends Action
+final class CreateCardStatusHistory extends Action
 {
     public function __invoke(CreateCardStatusHistoryDto $createCardStatusHistoryDto): CreateCardStatusHistoryResultDto
     {

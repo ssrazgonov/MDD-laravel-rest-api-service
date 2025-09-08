@@ -7,7 +7,7 @@ use App\Contracts\ResultDto;
 use Throwable;
 use RuntimeException;
 
-abstract readonly class Action implements Actionable
+abstract class Action implements Actionable
 {
     /**
      * @throws Throwable

@@ -1,8 +1,6 @@
 <?php
 
 use Tests\Helpers\JWTTestHelper;
-use Illuminate\Support\Facades\Artisan;
-use Illuminate\Support\Facades\Route;
 
 beforeEach(function () {
     $this->token = JWTTestHelper::generateToken(PRIVATE_KEY_PATH);
@@ -38,11 +36,12 @@ it('cannot create card with bad pan number', function () {
         'pan' => '1234567891234567',
     ]);
 
-    $response->assertStatus(422)
+    $response->assertStatus(400)
         ->assertJsonStructure([
-            'message',
-            'errors' => [
-                'pan'
+            'status',
+            'error' => [
+                'code',
+                'message'
             ]
         ]);
 });
@@ -60,17 +59,20 @@ it('cannot create same card for user', function () {
         'pan' => '2234567891234567',
     ]);
 
-    $secondResponse->assertStatus(422)
+    $secondResponse->assertStatus(400)
         ->assertJsonStructure([
             'status',
-            'error',
+            'error' => [
+                'code',
+                'message'
+            ],
             'data' => []
         ]);
 
     $secondResponse->assertJson([
             'error' => [
-                'error' => 'Эта карта уже добавлена в ваш профиль.',
-                'code' => 422
+                'message' => __('card::errors.already_exists'),
+                'code' => 400
             ],
         ]);
 });
@@ -134,7 +136,7 @@ it('can get user cards list', function () {
     $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
         ->getJson('/api/v1/cards');
 
-    $response->assertStatus(201)
+    $response->assertStatus(200)
         ->assertJsonStructure([
             'status',
             'error',
@@ -162,7 +164,7 @@ it('can get user cards with active status filter', function () {
     $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
         ->getJson('/api/v1/cards?status=active');
 
-    $response->assertStatus(201)
+    $response->assertStatus(200)
         ->assertJsonStructure([
             'status',
             'error',
@@ -185,7 +187,7 @@ it('can get user cards with inactive status filter', function () {
     $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
         ->getJson('/api/v1/cards?status=inactive');
 
-    $response->assertStatus(201)
+    $response->assertStatus(200)
         ->assertJsonStructure([
             'status',
             'error',
@@ -255,11 +257,11 @@ it('cannot activate non-existent card', function () {
     $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
         ->postJson('/api/v1/cards/99999/activate');
 
-    $response->assertStatus(400)
+    $response->assertStatus(404)
         ->assertJsonStructure([
             'status',
             'error',
-            'data' => []
+            'data',
         ]);
 });
 
@@ -267,7 +269,7 @@ it('cannot deactivate non-existent card', function () {
     $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
         ->postJson('/api/v1/cards/99999/deactivate');
 
-    $response->assertStatus(400)
+    $response->assertStatus(404)
         ->assertJsonStructure([
             'status',
             'error',
@@ -313,11 +315,12 @@ it('rejects invalid status filter', function () {
     $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
         ->getJson('/api/v1/cards?status=invalid');
 
-    $response->assertStatus(422)
+    $response->assertStatus(400)
         ->assertJsonStructure([
-            'message',
-            'errors' => [
-                'status'
+            'status',
+            'error' => [
+                'code',
+                'message'
             ]
         ]);
 });
@@ -331,11 +334,12 @@ it('validates comment field length', function () {
             'comment' => $longComment
         ]);
 
-    $response->assertStatus(422)
+    $response->assertStatus(400)
         ->assertJsonStructure([
-            'message',
-            'errors' => [
-                'comment'
+            'status',
+            'error' => [
+                'code',
+                'message'
             ]
         ]);
 });
@@ -346,11 +350,12 @@ it('rejects pan with invalid starting digit', function () {
             'pan' => '1234567891234567',
         ]);
 
-    $response->assertStatus(422)
+    $response->assertStatus(400)
         ->assertJsonStructure([
-            'message',
-            'errors' => [
-                'pan'
+            'status',
+            'error' => [
+                'code',
+                'message'
             ]
         ]);
 });
@@ -361,11 +366,12 @@ it('rejects pan with non-numeric characters', function () {
             'pan' => '223456789123456a',
         ]);
 
-    $response->assertStatus(422)
+    $response->assertStatus(400)
         ->assertJsonStructure([
-            'message',
-            'errors' => [
-                'pan'
+            'status',
+            'error' => [
+                'code',
+                'message'
             ]
         ]);
 });
@@ -376,11 +382,12 @@ it('rejects invalid pan format with special characters', function () {
             'pan' => '223456789123456A',
         ]);
 
-    $response->assertStatus(422)
+    $response->assertStatus(400)
         ->assertJsonStructure([
-            'message',
-            'errors' => [
-                'pan'
+            'status',
+            'error' => [
+                'code',
+                'message'
             ]
         ]);
 });
@@ -391,11 +398,12 @@ it('rejects pan that is too short', function () {
             'pan' => '223456789123456',
         ]);
 
-    $response->assertStatus(422)
+    $response->assertStatus(400)
         ->assertJsonStructure([
-            'message',
-            'errors' => [
-                'pan'
+            'status',
+            'error' => [
+                'code',
+                'message'
             ]
         ]);
 });
@@ -406,11 +414,12 @@ it('rejects pan that is too long', function () {
             'pan' => '22345678912345678901',
         ]);
 
-    $response->assertStatus(422)
+    $response->assertStatus(400)
         ->assertJsonStructure([
-            'message',
-            'errors' => [
-                'pan'
+            'status',
+            'error' => [
+                'code',
+                'message'
             ]
         ]);
 });
@@ -421,11 +430,12 @@ it('rejects missing pan field', function () {
             'comment' => 'Test comment'
         ]);
 
-    $response->assertStatus(422)
+    $response->assertStatus(400)
         ->assertJsonStructure([
-            'message',
-            'errors' => [
-                'pan'
+            'status',
+            'error' => [
+                'code',
+                'message'
             ]
         ]);
 });
@@ -465,11 +475,12 @@ it('rejects empty pan field', function () {
             'pan' => '',
         ]);
 
-    $response->assertStatus(422)
+    $response->assertStatus(400)
         ->assertJsonStructure([
-            'message',
-            'errors' => [
-                'pan'
+            'status',
+            'error' => [
+                'code',
+                'message'
             ]
         ]);
 });
@@ -483,7 +494,7 @@ it('can get user cards with null status filter', function () {
     $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
         ->getJson('/api/v1/cards?status=');
 
-    $response->assertStatus(201)
+    $response->assertStatus(200)
         ->assertJsonStructure([
             'status',
             'error',
@@ -579,8 +590,8 @@ it('can get user cards with multiple requests', function () {
     $response2 = $this->withHeader('Authorization', 'Bearer ' . $this->token)
         ->getJson('/api/v1/cards?status=inactive');
 
-    $response1->assertStatus(201);
-    $response2->assertStatus(201);
+    $response1->assertStatus(200);
+    $response2->assertStatus(200);
 });
 
 it('rejects pan with leading zeros', function () {
@@ -589,11 +600,12 @@ it('rejects pan with leading zeros', function () {
             'pan' => '0234567891234567',
         ]);
 
-    $response->assertStatus(422)
+    $response->assertStatus(400)
         ->assertJsonStructure([
-            'message',
-            'errors' => [
-                'pan'
+            'status',
+            'error' => [
+                'code',
+                'message'
             ]
         ]);
 });
@@ -604,11 +616,12 @@ it('rejects pan with spaces', function () {
             'pan' => '223456789123456 7',
         ]);
 
-    $response->assertStatus(422)
+    $response->assertStatus(400)
         ->assertJsonStructure([
-            'message',
-            'errors' => [
-                'pan'
+            'status',
+            'error' => [
+                'code',
+                'message'
             ]
         ]);
 });
@@ -630,7 +643,7 @@ it('can create multiple cards for user', function () {
     $listResponse = $this->withHeader('Authorization', 'Bearer ' . $this->token)
         ->getJson('/api/v1/cards');
 
-    $listResponse->assertStatus(201)
+    $listResponse->assertStatus(200)
         ->assertJsonCount(2, 'data');
 });
 
@@ -743,11 +756,11 @@ it('can get card with status history', function () {
         ->getJson("/api/v1/cards/{$cardId}");
 
     $response->assertStatus(200)
-        ->assertJsonStructure([
-            'status',
-            'error',
-            'data' => [
-                'card' => [
+    ->assertJsonStructure([
+        'status',
+        'error',
+        'data' => [
+            'card' => [
                     'id',
                     'user_id',
                     'hash',
@@ -756,19 +769,20 @@ it('can get card with status history', function () {
                     'comment',
                     'created_at',
                     'updated_at'
-                ],
+                    ],
                 'history' => [
                     '*' => [
                         'id',
                         'card_id',
                         'status',
                         'comment',
+                        'changed_by',
                         'created_at',
                         'updated_at'
                     ]
                 ]
-            ]
-        ]);
+        ]
+    ]);
 });
 
 it('cannot get non-existent card', function () {
@@ -782,10 +796,7 @@ it('cannot get non-existent card', function () {
             'data'
         ])
         ->assertJson([
-            'data' => [
-                'card' => null,
-                'history' => null
-            ]
+            'data' => null
         ]);
 });
 

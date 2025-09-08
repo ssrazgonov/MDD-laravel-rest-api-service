@@ -7,7 +7,7 @@ use App\Modules\Card\Dto\Actions\CardAccess\ProvideCardAccessDto;
 use App\Modules\Card\Dto\ActionsResults\CardAccess\ProvideCardAccessResultDto;
 use App\Modules\Card\Models\CardAccessControl;
 
-final readonly class ProvideCardAccess extends Action
+final class ProvideCardAccess extends Action
 {
     public function __invoke(ProvideCardAccessDto $provideCardAccessDto): ProvideCardAccessResultDto
     {
@@ -18,8 +18,6 @@ final readonly class ProvideCardAccess extends Action
             ],
             [
                 'access_level' => $provideCardAccessDto->level,
-                'created_at' => now(),
-                'updated_at' => now(),
             ]
         );
 

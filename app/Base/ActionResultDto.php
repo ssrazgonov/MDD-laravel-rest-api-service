@@ -10,9 +10,7 @@ abstract class ActionResultDto extends Dto implements ResultDto
         readonly public bool $status,
         readonly public ?ErrorDto $error = null,
         readonly public mixed $data = null,
-    ) {
-        parent::__construct([]);
-    }
+    ) {}
 
     public function hasError(): bool
     {
