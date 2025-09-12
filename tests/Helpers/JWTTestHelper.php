@@ -15,18 +15,19 @@ class JWTTestHelper
             'iat' => time(),
             'exp' => time() + 3600,
             'email' => 'test@example.com',
+            'name' => 'test user',
             'preferred_username' => 'testuser',
             'resource_access' => [
                 'account' => [
-                    'roles' => ['user', 'offline_access']
-                ]
-            ]
+                    'roles' => ['user', 'offline_access'],
+                ],
+            ],
         ];
 
         $payload = array_merge($defaultPayload, $payload);
-        
+
         $privateKey = file_get_contents($privateKeyPath);
-        
+
         return JWT::encode($payload, $privateKey, 'RS256');
     }
 

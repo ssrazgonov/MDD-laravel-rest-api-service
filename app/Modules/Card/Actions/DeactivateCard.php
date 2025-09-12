@@ -5,23 +5,23 @@ namespace App\Modules\Card\Actions;
 use App\Base\Action;
 use App\Base\ErrorDto;
 use App\Modules\Card\Actions\StatusHistory\CreateCardStatusHistory;
-use App\Modules\Card\Dto\Actions\ActivateCardDto;
 use App\Modules\Card\Dto\Actions\DeactivateCardDto;
 use App\Modules\Card\Dto\Actions\StatusHistory\CreateCardStatusHistoryDto;
-use App\Modules\Card\Dto\ActionsResults\ActivateCardResultDto;
 use App\Modules\Card\Dto\ActionsResults\DeactivateCardResultDto;
 use App\Modules\Card\Enums\CardStatus;
-use Illuminate\Support\Facades\DB;
 use App\Modules\Card\Models\Card;
-use Throwable;
+use App\Modules\Card\Models\CardAccessControl;
 use DomainException;
 use Illuminate\Auth\Access\AuthorizationException;
-use App\Modules\Card\Models\CardAccessControl;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Support\Facades\DB;
+use Throwable;
 
 final class DeactivateCard extends Action
 {
-    public function __construct(readonly public CreateCardStatusHistory $createCardStatusHistory) {}
+    public function __construct(public readonly CreateCardStatusHistory $createCardStatusHistory)
+    {
+    }
 
     public function __invoke(DeactivateCardDto $dto): DeactivateCardResultDto
     {
@@ -30,7 +30,7 @@ final class DeactivateCard extends Action
         try {
             $card = Card::findOrFail($dto->id);
 
-            if ($dto->user && !CardAccessControl::canUserManageCard($dto->user, $card)) {
+            if ($dto->user && ! CardAccessControl::canUserManageCard($dto->user, $card)) {
                 throw new AuthorizationException(__('card::errors.card_access_denied'), 403);
             }
 
@@ -49,7 +49,7 @@ final class DeactivateCard extends Action
             DB::commit();
 
             return new DeactivateCardResultDto(status: true);
-        } catch (ModelNotFoundException $exception) {
+        } catch (ModelNotFoundException) {
             return new DeactivateCardResultDto(
                 status: false,
                 error: new ErrorDto(
@@ -58,11 +58,12 @@ final class DeactivateCard extends Action
                 ),
                 data: [
                     'card' => null,
-                    'history' => null
+                    'history' => null,
                 ]
             );
         } catch (Throwable $excepion) {
             DB::rollBack();
+
             return new DeactivateCardResultDto(
                 status: false,
                 error: new ErrorDto(

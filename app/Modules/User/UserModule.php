@@ -8,8 +8,8 @@ use App\Modules\User\Providers\UserServiceProvider;
 class UserModule extends Module
 {
     protected string $name = 'user';
-    
+
     protected array $providers = [
-        UserServiceProvider::class
+        UserServiceProvider::class,
     ];
 }

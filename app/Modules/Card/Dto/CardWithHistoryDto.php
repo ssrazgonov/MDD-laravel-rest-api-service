@@ -11,5 +11,6 @@ class CardWithHistoryDto extends Dto
     public function __construct(
         public ?Card $card = null,
         public ?Collection $history = null,
-    ) {}
+    ) {
+    }
 }

@@ -10,5 +10,6 @@ class GetUserCardsDto extends Dto
     public function __construct(
         public string $userId,
         public ?CardStatus $status = null
-    ){}
+    ) {
+    }
 }

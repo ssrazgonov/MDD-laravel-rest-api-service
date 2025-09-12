@@ -5,6 +5,7 @@ namespace App\Providers;
 use App\Contracts\Module;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\ServiceProvider;
+use Throwable;
 
 class ModuleServiceProvider extends ServiceProvider
 {
@@ -28,7 +29,7 @@ class ModuleServiceProvider extends ServiceProvider
                 if (class_exists($provider)) {
                     $this->app->register($provider);
                 } else {
-                   Log::warning("Service provider class not found for module {$module->getName()}: {$provider}");
+                    Log::warning("Service provider class not found for module {$module->getName()}: {$provider}");
                 }
             }
         }
@@ -40,12 +41,12 @@ class ModuleServiceProvider extends ServiceProvider
 
         foreach ($modules as $module) {
             $moduleName = $module->getName();
-            
+
             try {
                 $module->boot();
-            } catch (\Throwable $e) {
+            } catch (Throwable $e) {
                 Log::error("Error booting module [{$moduleName}]: " . $e->getMessage(), [
-                    'exception' => $e
+                    'exception' => $e,
                 ]);
 
                 throw $e;
@@ -71,7 +72,7 @@ class ModuleServiceProvider extends ServiceProvider
                     } else {
                         Log::warning("Module class {$moduleClass} does not implement ModuleInterface.");
                     }
-                } catch (\Throwable $e) {
+                } catch (Throwable $e) {
                     Log::error("Error instantiating module class {$moduleClass}: " . $e->getMessage());
                 }
             } else {
@@ -81,6 +82,4 @@ class ModuleServiceProvider extends ServiceProvider
 
         return $modules;
     }
-
-
 }

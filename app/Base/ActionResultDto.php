@@ -7,14 +7,15 @@ use App\Contracts\ResultDto;
 abstract class ActionResultDto extends Dto implements ResultDto
 {
     public function __construct(
-        readonly public bool $status,
-        readonly public ?ErrorDto $error = null,
-        readonly public mixed $data = null,
-    ) {}
+        public readonly bool $status,
+        public readonly ?ErrorDto $error = null,
+        public readonly mixed $data = null,
+    ) {
+    }
 
     public function hasError(): bool
     {
-        return $this->error !== null;
+        return $this->error instanceof ErrorDto;
     }
 
     public function getError(): ErrorDto

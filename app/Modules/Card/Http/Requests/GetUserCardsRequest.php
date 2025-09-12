@@ -9,7 +9,7 @@ class GetUserCardsRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'status' => ['sometimes','nullable', 'string', 'in:active,inactive'],
+            'status' => ['sometimes', 'nullable', 'string', 'in:active,inactive'],
         ];
     }
 }

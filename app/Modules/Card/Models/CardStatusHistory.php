@@ -2,11 +2,11 @@
 
 namespace App\Modules\Card\Models;
 
+use App\Modules\Card\Enums\CardStatus;
 use App\Modules\Card\Models\Card;
+use App\Modules\User\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use App\Modules\Card\Enums\CardStatus;
-use App\Modules\User\Models\User;
 
 class CardStatusHistory extends Model
 {
@@ -25,7 +25,6 @@ class CardStatusHistory extends Model
     {
         return $this->belongsTo(Card::class);
     }
-
 
     public function user(): BelongsTo
     {
