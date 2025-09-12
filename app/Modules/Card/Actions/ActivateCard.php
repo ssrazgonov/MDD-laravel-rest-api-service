@@ -10,21 +10,21 @@ use App\Modules\Card\Dto\Actions\DeactivateCardDto;
 use App\Modules\Card\Dto\Actions\StatusHistory\CreateCardStatusHistoryDto;
 use App\Modules\Card\Dto\ActionsResults\ActivateCardResultDto;
 use App\Modules\Card\Enums\CardStatus;
-use Illuminate\Support\Facades\DB;
 use App\Modules\Card\Models\Card;
-use DomainException;
-use Throwable;
-use Illuminate\Auth\Access\AuthorizationException;
 use App\Modules\Card\Models\CardAccessControl;
+use DomainException;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
-
+use Illuminate\Support\Facades\DB;
+use Throwable;
 
 final class ActivateCard extends Action
 {
     public function __construct(
-        readonly private CreateCardStatusHistory $createCardStatusHistory,
-        readonly private DeactivateCard $deactivateCard,
-    ) {}
+        private readonly CreateCardStatusHistory $createCardStatusHistory,
+        private readonly DeactivateCard $deactivateCard,
+    ) {
+    }
 
     public function __invoke(ActivateCardDto $dto): ActivateCardResultDto
     {
@@ -33,7 +33,7 @@ final class ActivateCard extends Action
         try {
             $card = Card::findOrFail($dto->id);
 
-            if ($dto->user && !CardAccessControl::canUserManageCard($dto->user, $card)) {
+            if ($dto->user && ! CardAccessControl::canUserManageCard($dto->user, $card)) {
                 throw new AuthorizationException(__('card::errors.card_access_denied'), 403);
             }
 
@@ -58,7 +58,7 @@ final class ActivateCard extends Action
             DB::commit();
 
             return new ActivateCardResultDto(status: true);
-        } catch (ModelNotFoundException $exception) {
+        } catch (ModelNotFoundException) {
             return new ActivateCardResultDto(
                 status: false,
                 error: new ErrorDto(
@@ -68,6 +68,7 @@ final class ActivateCard extends Action
             );
         } catch (Throwable $excepion) {
             DB::rollBack();
+
             return new ActivateCardResultDto(
                 status: false,
                 error: new ErrorDto(

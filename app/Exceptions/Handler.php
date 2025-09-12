@@ -5,16 +5,16 @@ namespace App\Exceptions;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
-use Throwable;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Validation\ValidationException;
 use RuntimeException;
+use Throwable;
 
 class Handler extends ExceptionHandler
 {
     public function render($request, Throwable $exception)
     {
-        if ($request->expectsJson() || $request->is('api/*')) {     
+        if ($request->expectsJson() || $request->is('api/*')) {
             return $this->renderApiException($exception);
         }
 
@@ -39,5 +39,4 @@ class Handler extends ExceptionHandler
             default => 500
         };
     }
-
 }

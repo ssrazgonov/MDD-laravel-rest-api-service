@@ -18,16 +18,16 @@ final class CreateCardStatusHistory extends Action
                 'card_id' => $createCardStatusHistoryDto->card->id,
                 'status' => $createCardStatusHistoryDto->card->status->value,
                 'comment' => $createCardStatusHistoryDto->comment,
-                'changed_by' => $createCardStatusHistoryDto->card->user_id
+                'changed_by' => auth()->id(),
             ]);
 
             return new CreateCardStatusHistoryResultDto(status: true);
-        } catch (Throwable $exception) {
+        } catch (Throwable $throwable) {
             return new CreateCardStatusHistoryResultDto(
                 status: false,
                 error: new ErrorDto(
-                    error: $exception->getMessage(),
-                    code: $exception->getCode(),
+                    error: $throwable->getMessage(),
+                    code: $throwable->getCode(),
                 )
             );
         }

@@ -5,11 +5,15 @@ namespace App\Base;
 use App\Contracts\Module as ModuleContract;
 use Illuminate\Support\Facades\File;
 use ReflectionClass;
+use ReflectionException;
+use RuntimeException;
 
 abstract class Module implements ModuleContract
 {
     protected string $name;
+
     protected string $path;
+
     protected array $providers = [];
 
     public function getName(): string
@@ -50,7 +54,7 @@ abstract class Module implements ModuleContract
     protected function registerProviders(): void
     {
         $app = app();
-        
+
         foreach ($this->getProviders() as $provider) {
             $app->register($provider);
         }
@@ -59,7 +63,7 @@ abstract class Module implements ModuleContract
     protected function registerRoutes(): void
     {
         $routesPath = $this->path . '/Http/routes.php';
-        
+
         if (file_exists($routesPath)) {
             app('router')->group([], $routesPath);
         }
@@ -68,7 +72,7 @@ abstract class Module implements ModuleContract
     protected function registerMigrations(): void
     {
         $migrationsPath = $this->path . '/Database/Migrations';
-        
+
         if (is_dir($migrationsPath)) {
             $this->loadMigrationsFrom($migrationsPath);
         }
@@ -77,7 +81,7 @@ abstract class Module implements ModuleContract
     protected function mergeConfigFrom(string $path, string $key): void
     {
         $config = app('config');
-        
+
         $config->set($key, array_merge(
             require $path,
             $config->get($key, [])
@@ -88,14 +92,14 @@ abstract class Module implements ModuleContract
     {
         app('migrator')->path($path);
     }
-    
+
     protected function setupPath(): void
     {
         try {
             $reflection = new ReflectionClass($this);
             $this->path = dirname($reflection->getFileName());
-        } catch (\ReflectionException $e) {
-            throw new \RuntimeException("Unable to determine module path for " . static::class . ": " . $e->getMessage());
-        }    
+        } catch (ReflectionException $reflectionException) {
+            throw new RuntimeException('Unable to determine module path for ' . static::class . ': ' . $reflectionException->getMessage(), $reflectionException->getCode(), $reflectionException);
+        }
     }
 }

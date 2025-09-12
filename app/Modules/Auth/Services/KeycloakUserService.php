@@ -6,7 +6,7 @@ use App\Modules\Auth\Dto\TokenDto;
 use App\Modules\User\Models\User;
 
 class KeycloakUserService
-{ 
+{
     public function findOrCreateUser(TokenDto $tokenData): User
     {
         $user = User::where('id', $tokenData->sub)->first();

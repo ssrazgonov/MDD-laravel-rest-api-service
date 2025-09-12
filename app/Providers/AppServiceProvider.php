@@ -3,13 +3,13 @@
 namespace App\Providers;
 
 use App\Base\ActionResultDto;
-use Illuminate\Support\ServiceProvider;
-use Illuminate\Contracts\Debug\ExceptionHandler;
 use App\Exceptions\Handler;
-use Illuminate\Http\JsonResponse;
 use Dedoc\Scramble\Scramble;
 use Dedoc\Scramble\Support\Generator\OpenApi;
 use Dedoc\Scramble\Support\Generator\SecurityScheme;
+use Illuminate\Contracts\Debug\ExceptionHandler;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -30,7 +30,7 @@ class AppServiceProvider extends ServiceProvider
             return response()->json([
                 'status' => true,
                 'error' => null,
-                'data' => $data instanceof ActionResultDto ? $data?->data : $data
+                'data' => $data instanceof ActionResultDto ? $data?->data : $data,
             ], $code);
         });
 
@@ -39,9 +39,9 @@ class AppServiceProvider extends ServiceProvider
                 'status' => false,
                 'error' => [
                     'code' => $code,
-                    'message' => $message
+                    'message' => $message,
                 ],
-                'data' => $data
+                'data' => $data,
             ], $code >= 400 && $code < 600 ? $code : 500);
         });
 

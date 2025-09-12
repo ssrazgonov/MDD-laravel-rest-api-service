@@ -3,53 +3,71 @@
 namespace App\Modules\Card\Models;
 
 use App\Modules\Card\Enums\CardStatus;
-use App\Modules\User\Models\User;
+use App\Modules\User\Models\GroupMember;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Builder;
 
 class Card extends Model
 {
+    use HasFactory;
+
     protected $fillable = [
-        'user_id',
+        'member_id',
         'hash',
         'last_digits',
         'status',
-        'comment'
+        'comment',
     ];
 
     protected $casts = [
-        'status' => CardStatus::class
+        'status' => CardStatus::class,
     ];
+
+    public function groupMember(): BelongsTo
+    {
+        return $this->belongsTo(GroupMember::class, 'member_id');
+    }
+
+    public function member(): BelongsTo
+    {
+        return $this->belongsTo(GroupMember::class, 'member_id');
+    }
 
     public function user(): BelongsTo
     {
-        return $this->belongsTo(User::class);
+        return $this->member->user();
     }
 
-    public static function existsForUserWithHash(string $userId, string $hashedPan): bool
+    public static function existsForMemberWithHash(int $memberId, string $hashedPan): bool
     {
-        $exists = self::where('user_id', $userId)
+        return self::where('member_id', $memberId)
             ->where('hash', $hashedPan)
             ->exists();
-
-        return $exists;
     }
 
     public function shouldAutoActivate(): bool
     {
-        return !static::where('user_id', $this->user_id)
+        return ! static::where('member_id', $this->member_id)
             ->where('status', CardStatus::ACTIVE)
             ->exists();
     }
 
+    public function scopeForMember(Builder $query, int $memberId): Builder
+    {
+        return $query->where('member_id', $memberId);
+    }
+
     public function scopeForUser(Builder $query, string $userId): Builder
     {
-        return $query->where('user_id', $userId);
+        return $query->whereHas('member', function ($q) use ($userId) {
+            $q->where('user_id', $userId);
+        });
     }
 
     public function scopeStatusFilter(Builder $query, ?CardStatus $status): Builder
     {
-        return $status ? $query->where('status', $status->value) : $query;
+        return $status instanceof CardStatus ? $query->where('status', $status->value) : $query;
     }
 }

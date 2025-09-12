@@ -9,5 +9,6 @@ class ErrorDto extends Dto
     public function __construct(
         public ?string $error,
         public ?int $code,
-    ){}
+    ) {
+    }
 }

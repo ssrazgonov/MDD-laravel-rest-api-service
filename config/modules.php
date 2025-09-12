@@ -4,7 +4,7 @@ use App\Modules\Card\CardModule;
 use App\Modules\User\UserModule;
 
 return [
-    
+
     /*
     |--------------------------------------------------------------------------
     | Список модулей

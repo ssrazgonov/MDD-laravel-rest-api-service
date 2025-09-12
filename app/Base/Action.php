@@ -4,8 +4,8 @@ namespace App\Base;
 
 use App\Contracts\Actionable;
 use App\Contracts\ResultDto;
-use Throwable;
 use RuntimeException;
+use Throwable;
 
 abstract class Action implements Actionable
 {

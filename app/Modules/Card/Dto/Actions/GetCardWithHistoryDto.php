@@ -10,5 +10,6 @@ class GetCardWithHistoryDto extends Dto
     public function __construct(
         public int $id,
         public ?User $user = null
-    ){}
+    ) {
+    }
 }

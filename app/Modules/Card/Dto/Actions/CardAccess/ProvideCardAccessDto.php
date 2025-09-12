@@ -11,5 +11,6 @@ class ProvideCardAccessDto extends Dto
         public string $userId,
         public string $cardId,
         public CardAccessLevel $level,
-    ){}
+    ) {
+    }
 }

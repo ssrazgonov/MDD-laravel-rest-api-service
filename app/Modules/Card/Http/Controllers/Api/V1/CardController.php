@@ -24,7 +24,9 @@ use Illuminate\Support\Facades\Auth;
 
 class CardController extends Controller
 {
-    use AuthorizesRequests, DispatchesJobs, ValidatesRequests;
+    use AuthorizesRequests;
+    use DispatchesJobs;
+    use ValidatesRequests;
 
     /**
      * @response array{status: bool, error: array{error: string, code: int} , data: Card[]}
@@ -83,6 +85,7 @@ class CardController extends Controller
     {
         return response()->json()->api(
             $getCardWithHistory->handleResult($getCardWithHistory(new GetCardWithHistoryDto(id: $id, user: Auth::user()))),
-            Response::HTTP_OK,);
+            Response::HTTP_OK,
+        );
     }
 }

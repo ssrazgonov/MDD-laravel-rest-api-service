@@ -3,10 +3,9 @@
 namespace App\Modules\Card\Models;
 
 use App\Modules\Card\Enums\CardAccessLevel;
+use App\Modules\User\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use App\Modules\User\Models\User;
-use \Illuminate\Support\Collection;
 
 class CardAccessControl extends Model
 {
@@ -39,10 +38,11 @@ class CardAccessControl extends Model
 
     public static function canUserManageCard(User $user, Card $card): bool
     {
-        if ($card->user_id === $user->id) {
+        // Check if user owns the member that owns the card
+        if ($card->member && $card->member->user_id === $user->id) {
             return true;
         }
-        
+
         return self::where('card_id', $card->id)
             ->where('user_id', $user->id)
             ->where('access_level', CardAccessLevel::MANAGE)
@@ -51,10 +51,11 @@ class CardAccessControl extends Model
 
     public static function canUserViewCard(User $user, Card $card): bool
     {
-        if ($card->user_id === $user->id) {
+        // Check if user owns the member that owns the card
+        if ($card->member && $card->member->user_id === $user->id) {
             return true;
         }
-        
+
         return self::where('card_id', $card->id)
             ->where('user_id', $user->id)
             ->whereIn('access_level', [CardAccessLevel::VIEW, CardAccessLevel::MANAGE])
