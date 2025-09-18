@@ -13,7 +13,7 @@ return new class() extends Migration {
         Schema::create('members', function (Blueprint $table) {
             $table->id();
             $table->uuid('user_id');
-            $table->string('member_type')->default('primary'); // primary, dependent, etc.
+            $table->string('member_type')->default('primary');
             $table->string('name')->nullable();
             $table->boolean('is_active')->default(true);
             $table->timestamps();

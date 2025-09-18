@@ -11,13 +11,10 @@ return new class() extends Migration {
     public function up(): void
     {
         Schema::table('member_identities', function (Blueprint $table) {
-            // Drop old foreign key
             $table->dropForeign(['member_id']);
 
-            // Rename column
             $table->renameColumn('member_id', 'group_member_id');
 
-            // Add new foreign key
             $table->foreign('group_member_id')->references('id')->on('group_members')->onDelete('cascade');
         });
     }
@@ -28,13 +25,10 @@ return new class() extends Migration {
     public function down(): void
     {
         Schema::table('member_identities', function (Blueprint $table) {
-            // Drop new foreign key
             $table->dropForeign(['group_member_id']);
 
-            // Rename column back
             $table->renameColumn('group_member_id', 'member_id');
 
-            // Add old foreign key
             $table->foreign('member_id')->references('id')->on('members')->onDelete('cascade');
         });
     }

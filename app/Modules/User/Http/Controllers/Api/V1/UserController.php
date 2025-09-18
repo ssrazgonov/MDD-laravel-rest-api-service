@@ -24,7 +24,7 @@ class UserController extends Controller
     {
         $dto = new GetUserMembersDto(
             userId: Auth::id(),
-            memberType: 'dependent', // Only children
+            memberType: 'dependent',
             active: true
         );
 

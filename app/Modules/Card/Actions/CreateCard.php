@@ -46,20 +46,9 @@ final class CreateCard extends Action
                 throw new AuthenticationException();
             }
 
-            // Определяем memberId
             $memberId = $createCardActionDto->memberId;
             if (! $memberId) {
-                // Используем primary group member пользователя
-                $primaryGroupMember = $user->primaryGroupMember();
-                if (! $primaryGroupMember) {
-                    // Если нет primary group member, создаем индивидуальную группу
-                    $this->memberService->processIndividualJwt($user);
-                    $primaryGroupMember = $user->primaryGroupMember();
-                    if (! $primaryGroupMember) {
-                        throw new DomainException('Unable to create primary group member', 500);
-                    }
-                }
-
+                $primaryGroupMember = $this->memberService->ensureUserHasPrimaryGroupMember($user, 'Unknown');
                 $memberId = $primaryGroupMember->id;
             }
 
@@ -88,16 +77,34 @@ final class CreateCard extends Action
                 ));
             }
 
-            // Grant access to the user who owns the member
             $member = $card->member;
             if ($member) {
+                $accessLevel = $member->member_type === 'dependent'
+                    ? CardAccessLevel::VIEW
+                    : CardAccessLevel::MANAGE;
+
                 $this->handleResult(
                     ($this->provideCardAccess)(new ProvideCardAccessDto(
                         userId: $member->user_id,
                         cardId: $card->id,
-                        level: CardAccessLevel::MANAGE
+                        level: $accessLevel
                     ))
                 );
+
+                if ($member->member_type === 'dependent') {
+                    $primaryMembers = $member->group->groupMembers()->primary()->active()->get();
+                    foreach ($primaryMembers as $primaryMember) {
+                        if ($primaryMember->user_id) {
+                            $this->handleResult(
+                                ($this->provideCardAccess)(new ProvideCardAccessDto(
+                                    userId: $primaryMember->user_id,
+                                    cardId: $card->id,
+                                    level: CardAccessLevel::MANAGE
+                                ))
+                            );
+                        }
+                    }
+                }
             }
 
             $card->refresh();

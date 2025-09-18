@@ -11,6 +11,7 @@ use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use RuntimeException;
 
 class KeycloakUserMiddleware
@@ -34,8 +35,6 @@ class KeycloakUserMiddleware
             throw new AuthenticationException();
         }
 
-        // Здесь нужно декодировать JWT и получить данные
-        // Предполагаем, что у нас есть декодированный payload
         $payload = $this->decodeJwt($token);
 
         if (! isset($payload['sub'])) {
@@ -44,18 +43,23 @@ class KeycloakUserMiddleware
 
         $user = $this->userService->findOrCreateUser(new TokenDto(sub: $payload['sub']));
 
-        // Определяем тип пользователя по наличию children в JWT
-        if (isset($payload['children']) && is_array($payload['children'])) {
-            // Это родитель из residents realm - обрабатываем детей
-            $this->memberService->processParentJwt($user, $payload['children'], $payload['name']);
-        } else {
-            // Это либо взрослый, либо ребенок из kids realm
-            $this->memberService->processIndividualJwt($user, $payload['name']);
+        $kids = [];
+        if (isset($payload['kids'])) {
+            $kids = is_array($payload['kids']) ? $payload['kids'] : json_decode($payload['kids'], true);
         }
 
-        // Если Auth::user() имеет null id, устанавливаем его
-        if (auth()->check() && ! auth()->user()->id) {
-            auth()->user()->id = $payload['sub'];
+        if (! empty($kids)) {
+            $this->memberService->processParentJwt($user, $kids, $payload['name'] ?? 'Unknown');
+        } else {
+            $this->memberService->processIndividualJwt(
+                $user,
+                $payload['name'] ?? 'Unknown',
+                $payload['snils'] ?? null
+            );
+        }
+
+        if (Auth::check() && ! Auth::id()) {
+            Auth::user()->id = $payload['sub'];
         }
 
         return $next($request);
@@ -63,14 +67,11 @@ class KeycloakUserMiddleware
 
     private function decodeJwt(string $token): array
     {
-        // Получаем публичный ключ из конфига или файла fixtures
         $publicKey = $this->getPublicKey();
 
         try {
-            // Создаем объект Key для публичного ключа
             $key = new Key($publicKey, 'RS256');
 
-            // Декодируем и валидируем JWT с публичным ключом
             $decoded = JWT::decode($token, $key);
 
             return json_decode(json_encode($decoded), true);
@@ -81,25 +82,21 @@ class KeycloakUserMiddleware
 
     private function getPublicKey(): string
     {
-        // Обязательно берем из конфига (.env)
         $configKey = config('keycloak.realm_public_key');
+
         if (! $configKey) {
             throw new RuntimeException('KEYCLOAK_REALM_PUBLIC_KEY not found in .env file');
         }
 
-        // Конвертируем PEM формат если нужно
         return $this->formatPublicKey($configKey);
     }
 
     private function formatPublicKey(string $key): string
     {
-        // Если ключ уже в правильном формате PEM
         if (str_contains($key, '-----BEGIN PUBLIC KEY-----')) {
             return $key;
         }
 
-        // Если ключ в формате JWK или другом формате, конвертируем
-        // Для простоты предполагаем, что ключ уже в правильном формате
         return "-----BEGIN PUBLIC KEY-----\n" .
                wordwrap($key, 64, "\n", true) .
                "\n-----END PUBLIC KEY-----\n";

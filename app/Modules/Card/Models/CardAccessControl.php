@@ -22,6 +22,7 @@ class CardAccessControl extends Model
     ];
 
     protected $casts = [
+        'access_level' => CardAccessLevel::class,
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];
@@ -38,7 +39,6 @@ class CardAccessControl extends Model
 
     public static function canUserManageCard(User $user, Card $card): bool
     {
-        // Check if user owns the member that owns the card
         if ($card->member && $card->member->user_id === $user->id) {
             return true;
         }
@@ -51,7 +51,6 @@ class CardAccessControl extends Model
 
     public static function canUserViewCard(User $user, Card $card): bool
     {
-        // Check if user owns the member that owns the card
         if ($card->member && $card->member->user_id === $user->id) {
             return true;
         }

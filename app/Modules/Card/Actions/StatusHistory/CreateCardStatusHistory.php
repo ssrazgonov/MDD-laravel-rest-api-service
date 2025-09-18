@@ -7,6 +7,7 @@ use App\Base\ErrorDto;
 use App\Modules\Card\Dto\Actions\StatusHistory\CreateCardStatusHistoryDto;
 use App\Modules\Card\Dto\ActionsResults\StatusHistory\CreateCardStatusHistoryResultDto;
 use App\Modules\Card\Models\CardStatusHistory;
+use Illuminate\Support\Facades\Auth;
 use Throwable;
 
 final class CreateCardStatusHistory extends Action
@@ -18,7 +19,7 @@ final class CreateCardStatusHistory extends Action
                 'card_id' => $createCardStatusHistoryDto->card->id,
                 'status' => $createCardStatusHistoryDto->card->status->value,
                 'comment' => $createCardStatusHistoryDto->comment,
-                'changed_by' => auth()->id(),
+                'changed_by' => Auth::id(),
             ]);
 
             return new CreateCardStatusHistoryResultDto(status: true);

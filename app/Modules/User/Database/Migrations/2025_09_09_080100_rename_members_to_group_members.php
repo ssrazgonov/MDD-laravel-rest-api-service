@@ -12,13 +12,11 @@ return new class() extends Migration {
     {
         Schema::rename('members', 'group_members');
 
-        // Обновляем foreign key в member_identities
         Schema::table('member_identities', function (Blueprint $table) {
             $table->dropForeign(['member_id']);
             $table->foreign('member_id')->references('id')->on('group_members')->onDelete('cascade');
         });
 
-        // Обновляем foreign key в cards
         Schema::table('cards', function (Blueprint $table) {
             $table->dropForeign(['member_id']);
             $table->foreign('member_id')->references('id')->on('group_members')->onDelete('cascade');
@@ -30,7 +28,6 @@ return new class() extends Migration {
      */
     public function down(): void
     {
-        // Обновляем foreign keys обратно
         Schema::table('member_identities', function (Blueprint $table) {
             $table->dropForeign(['member_id']);
             $table->foreign('member_id')->references('id')->on('members')->onDelete('cascade');

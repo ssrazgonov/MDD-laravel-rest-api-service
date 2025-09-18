@@ -92,8 +92,6 @@ class GroupMember extends Model
             'is_primary' => $isPrimary,
         ]);
 
-        // If it was just created, it's already associated
-        // If it existed, update the group_member_id
         if ($identity->group_member_id !== $this->id) {
             $identity->update(['group_member_id' => $this->id, 'is_primary' => $isPrimary]);
         }
@@ -107,5 +105,23 @@ class GroupMember extends Model
             ->where('identity_type', $type)
             ->where('identity_value', $value)
             ->first();
+    }
+
+    public function canUserAccessCards($user): bool
+    {
+        $userPrimaryMember = static::where('user_id', $user->id)
+            ->where('group_id', $this->group_id)
+            ->where('member_type', 'primary')
+            ->first();
+
+        if (! $userPrimaryMember) {
+            return false;
+        }
+
+        if ($this->member_type !== 'dependent') {
+            return false;
+        }
+
+        return true;
     }
 }

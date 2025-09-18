@@ -25,6 +25,9 @@ class Card extends Model
         'status' => CardStatus::class,
     ];
 
+    protected $appends = [
+    ];
+
     public function groupMember(): BelongsTo
     {
         return $this->belongsTo(GroupMember::class, 'member_id');
@@ -33,6 +36,11 @@ class Card extends Model
     public function member(): BelongsTo
     {
         return $this->belongsTo(GroupMember::class, 'member_id');
+    }
+
+    public function cardAccessControlForUser(string $userId)
+    {
+        return $this->hasOne(CardAccessControl::class)->where('user_id', $userId);
     }
 
     public function user(): BelongsTo

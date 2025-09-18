@@ -12,14 +12,11 @@ return static function (RectorConfig $rectorConfig): void {
         __DIR__ . '/tests',
     ]);
 
-    // Указываем версию PHP 8.4
     $rectorConfig->phpVersion(80400);
 
-    // Импорт имён
     $rectorConfig->importNames();
     $rectorConfig->removeUnusedImports();
 
-    // Laravel-правила (опционально)
     $rectorConfig->sets([
         LaravelSetList::LARAVEL_100,
     ]);

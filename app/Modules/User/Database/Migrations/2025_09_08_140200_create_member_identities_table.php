@@ -13,7 +13,7 @@ return new class() extends Migration {
         Schema::create('member_identities', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('member_id');
-            $table->string('identity_type'); // 'keycloak', 'snils', 'passport', etc.
+            $table->string('identity_type');
             $table->string('identity_value');
             $table->boolean('is_primary')->default(false);
             $table->timestamps();
