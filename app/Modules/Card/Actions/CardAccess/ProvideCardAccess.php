@@ -14,7 +14,7 @@ final class ProvideCardAccess extends Action
         CardAccessControl::updateOrCreate(
             [
                 'card_id' => $provideCardAccessDto->cardId,
-                'user_id' => $provideCardAccessDto->userId,
+                'group_member_id' => $provideCardAccessDto->groupMemberId,
             ],
             [
                 'access_level' => $provideCardAccessDto->level,

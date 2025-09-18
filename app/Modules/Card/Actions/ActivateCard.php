@@ -41,9 +41,9 @@ final class ActivateCard extends Action
                 throw new DomainException(__('card::errors.already_activated'), 400);
             }
 
-            if ($card->user->hasActiveCard()) {
+            if ($card->groupMember->hasActiveCard()) {
                 $this->handleResult(($this->deactivateCard)(
-                    new DeactivateCardDto(id: $card->user->activeCard()->id)
+                    new DeactivateCardDto(id: $card->groupMember->activeCards()->select('id')->first()->id)
                 ));
             }
 

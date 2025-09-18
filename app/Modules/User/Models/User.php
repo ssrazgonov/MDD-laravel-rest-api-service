@@ -2,11 +2,8 @@
 
 namespace App\Modules\User\Models;
 
-use App\Modules\Card\Enums\CardStatus;
-use App\Modules\Card\Models\Card;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\HasManyThrough;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
@@ -14,47 +11,24 @@ class User extends Authenticatable
 {
     use HasFactory;
     use Notifiable;
+
     public $fillable = [
         'id',
         'email',
+        'group_member_id',
     ];
 
     public $incrementing = false;
 
     protected $keyType = 'string';
 
-    public function groupMembers(): HasMany
+    public function groupMember(): BelongsTo
     {
-        return $this->hasMany(GroupMember::class);
+        return $this->belongsTo(GroupMember::class, 'group_member_id');
     }
 
-    public function primaryGroupMember(): ?GroupMember
+    public function primaryGroupMember(): BelongsTo
     {
-        return $this->groupMembers()->primary()->active()->first();
-    }
-
-    public function groups()
-    {
-        return $this->hasManyThrough(Group::class, GroupMember::class, 'user_id', 'id', 'id', 'group_id');
-    }
-
-    public function card(): HasManyThrough
-    {
-        return $this->hasManyThrough(Card::class, GroupMember::class, 'user_id', 'member_id', 'id', 'id');
-    }
-
-    public function activeCards(): HasManyThrough
-    {
-        return $this->hasManyThrough(Card::class, GroupMember::class, 'user_id', 'member_id', 'id', 'id')->where('status', CardStatus::ACTIVE);
-    }
-
-    public function activeCard(): ?Card
-    {
-        return $this->activeCards()->first();
-    }
-
-    public function hasActiveCard(): bool
-    {
-        return $this->activeCards()->exists();
+        return $this->groupMember()->primary();
     }
 }

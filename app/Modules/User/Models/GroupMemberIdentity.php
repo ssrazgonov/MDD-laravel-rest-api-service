@@ -5,12 +5,12 @@ namespace App\Modules\User\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class MemberIdentity extends Model
+class GroupMemberIdentity extends Model
 {
     protected $fillable = [
         'group_member_id',
-        'identity_type',
-        'identity_value',
+        'type',
+        'value',
         'is_primary',
     ];
 
@@ -25,8 +25,8 @@ class MemberIdentity extends Model
 
     public static function findByIdentity(string $type, string $value): ?GroupMember
     {
-        $identity = self::where('identity_type', $type)
-            ->where('identity_value', $value)
+        $identity = self::where('type', $type)
+            ->where('value', $value)
             ->first();
 
         return $identity?->groupMember;
@@ -34,8 +34,8 @@ class MemberIdentity extends Model
 
     public static function findIdentity(string $type, string $value): ?self
     {
-        return self::where('identity_type', $type)
-            ->where('identity_value', $value)
+        return self::where('type', $type)
+            ->where('value', $value)
             ->first();
     }
 }

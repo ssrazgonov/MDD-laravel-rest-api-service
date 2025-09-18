@@ -14,6 +14,7 @@ use App\Modules\Card\Dto\ActionsResults\CreateCardResultDto;
 use App\Modules\Card\Enums\CardAccessLevel;
 use App\Modules\Card\Enums\CardStatus;
 use App\Modules\Card\Models\Card;
+use App\Modules\User\Enums\GroupMemberType;
 use App\Modules\User\Models\User;
 use App\Modules\User\Services\KeycloakMemberService;
 use DomainException;
@@ -47,8 +48,9 @@ final class CreateCard extends Action
             }
 
             $memberId = $createCardActionDto->memberId;
+
             if (! $memberId) {
-                $primaryGroupMember = $this->memberService->ensureUserHasPrimaryGroupMember($user, 'Unknown');
+                $primaryGroupMember = $user->groupMember;
                 $memberId = $primaryGroupMember->id;
             }
 
@@ -59,7 +61,7 @@ final class CreateCard extends Action
             }
 
             $card = Card::create([
-                'member_id' => $memberId,
+                'group_member_id' => $memberId,
                 'hash' => $hashedPan,
                 'last_digits' => substr($createCardActionDto->pan, -4),
                 'status' => CardStatus::INACTIVE,
@@ -77,32 +79,30 @@ final class CreateCard extends Action
                 ));
             }
 
-            $member = $card->member;
+            $member = $card->groupMember;
             if ($member) {
-                $accessLevel = $member->member_type === 'dependent'
+                $accessLevel = $member->type === GroupMemberType::DEPENDENT
                     ? CardAccessLevel::VIEW
                     : CardAccessLevel::MANAGE;
 
                 $this->handleResult(
                     ($this->provideCardAccess)(new ProvideCardAccessDto(
-                        userId: $member->user_id,
+                        groupMemberId: $member->id,
                         cardId: $card->id,
                         level: $accessLevel
                     ))
                 );
 
-                if ($member->member_type === 'dependent') {
+                if ($member->type === GroupMemberType::DEPENDENT) {
                     $primaryMembers = $member->group->groupMembers()->primary()->active()->get();
                     foreach ($primaryMembers as $primaryMember) {
-                        if ($primaryMember->user_id) {
-                            $this->handleResult(
-                                ($this->provideCardAccess)(new ProvideCardAccessDto(
-                                    userId: $primaryMember->user_id,
-                                    cardId: $card->id,
-                                    level: CardAccessLevel::MANAGE
-                                ))
-                            );
-                        }
+                        $this->handleResult(
+                            ($this->provideCardAccess)(new ProvideCardAccessDto(
+                                groupMemberId: $primaryMember->id,
+                                cardId: $card->id,
+                                level: CardAccessLevel::MANAGE
+                            ))
+                        );
                     }
                 }
             }

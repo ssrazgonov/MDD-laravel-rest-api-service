@@ -13,14 +13,11 @@ return new class() extends Migration {
         Schema::create('card_access_controls', function (Blueprint $table) {
             $table->id();
             $table->unsignedInteger('card_id');
-            $table->uuid('user_id');
+            $table->unsignedInteger('group_member_id');
             $table->string('access_level')->default('view');
             $table->timestamps();
 
-            $table->unique(['card_id', 'user_id']);
-
-            $table->foreign('card_id')->references('id')->on('cards')->onDelete('cascade');
-            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
+            $table->unique(['card_id', 'group_member_id']);
         });
     }
 

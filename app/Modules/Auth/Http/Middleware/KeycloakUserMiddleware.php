@@ -59,7 +59,7 @@ class KeycloakUserMiddleware
         }
 
         if (Auth::check() && ! Auth::id()) {
-            Auth::user()->id = $payload['sub'];
+            Auth::setUser($user);
         }
 
         return $next($request);

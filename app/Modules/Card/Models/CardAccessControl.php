@@ -3,6 +3,7 @@
 namespace App\Modules\Card\Models;
 
 use App\Modules\Card\Enums\CardAccessLevel;
+use App\Modules\User\Models\GroupMember;
 use App\Modules\User\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -12,13 +13,10 @@ class CardAccessControl extends Model
     public $timestamps = false;
 
     protected $fillable = [
-        'id',
         'card_id',
-        'user_id',
+        'group_member_id',
         'access_level',
         'created_by',
-        'created_at',
-        'updated_at',
     ];
 
     protected $casts = [
@@ -32,31 +30,23 @@ class CardAccessControl extends Model
         return $this->belongsTo(Card::class);
     }
 
-    public function user(): BelongsTo
+    public function member(): BelongsTo
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(GroupMember::class);
     }
 
     public static function canUserManageCard(User $user, Card $card): bool
     {
-        if ($card->member && $card->member->user_id === $user->id) {
-            return true;
-        }
-
         return self::where('card_id', $card->id)
-            ->where('user_id', $user->id)
+            ->where('group_member_id', $user->groupMember->id)
             ->where('access_level', CardAccessLevel::MANAGE)
             ->exists();
     }
 
     public static function canUserViewCard(User $user, Card $card): bool
     {
-        if ($card->member && $card->member->user_id === $user->id) {
-            return true;
-        }
-
         return self::where('card_id', $card->id)
-            ->where('user_id', $user->id)
+            ->where('group_member_id', $user->groupMember->id)
             ->whereIn('access_level', [CardAccessLevel::VIEW, CardAccessLevel::MANAGE])
             ->exists();
     }

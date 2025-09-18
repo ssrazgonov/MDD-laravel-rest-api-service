@@ -4,8 +4,10 @@ namespace App\Modules\Card\Actions;
 
 use App\Base\Action;
 use App\Base\ErrorDto;
+use App\Modules\Card\Actions\StatusHistory\GetCardStatusHistory;
 use App\Modules\Card\Dto\Actions\GetMemberCardDto;
-use App\Modules\Card\Dto\ActionsResults\GetMemberCardResultDto;
+use App\Modules\Card\Dto\Actions\StatusHistory\GetCardStatusHistoryDto;
+use App\Modules\Card\Dto\ActionsResults\GetCardWithHistoryResultDto;
 use App\Modules\Card\Models\Card;
 use App\Modules\User\Models\GroupMember;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -14,27 +16,41 @@ use Throwable;
 
 final class GetMemberCard extends Action
 {
-    public function __invoke(GetMemberCardDto $dto): GetMemberCardResultDto
+    public function __construct(
+        private readonly GetCardStatusHistory $getCardStatusHistory,
+    ) {
+    }
+
+    public function __invoke(GetMemberCardDto $dto): GetCardWithHistoryResultDto
     {
         try {
             $member = GroupMember::findOrFail($dto->memberId);
 
-            $card = Card::where('id', $dto->cardId)
-                ->where('member_id', $dto->memberId)
-                ->firstOrFail();
+            $userIsPrimaryMember = $member->group->groupMembers()->primary()->where('id', $dto->user->group_member_id)->exists();
 
-            if ($dto->user && ! $member->canUserAccessCards($dto->user)) {
+            if ($dto->user && ! $userIsPrimaryMember) {
                 throw new AuthorizationException('Access denied to member card', 403);
             }
 
-            return new GetMemberCardResultDto(status: true, data: $card);
+            $card = Card::where('id', $dto->cardId)
+                ->where('group_member_id', $dto->memberId)
+                ->firstOrFail();
+
+            $historyDto = ($this->getCardStatusHistory)(GetCardStatusHistoryDto::fromArray([
+                'cardId' => $card->id,
+            ]));
+
+            return new GetCardWithHistoryResultDto(status: true, data: [
+                'card' => $card,
+                'history' => $historyDto->data,
+            ]);
         } catch (ModelNotFoundException) {
-            return new GetMemberCardResultDto(
+            return new GetCardWithHistoryResultDto(
                 status: false,
                 error: new ErrorDto('Member or card not found', 404)
             );
         } catch (Throwable $exception) {
-            return new GetMemberCardResultDto(
+            return new GetCardWithHistoryResultDto(
                 status: false,
                 error: new ErrorDto($exception->getMessage(), $exception->getCode() ?: 400)
             );

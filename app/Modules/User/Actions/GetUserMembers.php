@@ -24,18 +24,18 @@ final class GetUserMembers extends Action
                     );
                 }
 
-                $primaryMember = $user->primaryGroupMember();
+                $primaryMember = $user->primaryGroupMember()->first();
                 if (! $primaryMember) {
                     return new GetUserMembersResultDto(status: true, data: collect());
                 }
 
                 $query = GroupMember::where('group_id', $primaryMember->group_id)
-                    ->where('member_type', 'dependent');
+                    ->where('type', 'dependent');
             } else {
                 $query = GroupMember::where('user_id', $dto->userId);
 
                 if ($dto->memberType) {
-                    $query->where('member_type', $dto->memberType);
+                    $query->where('type', $dto->memberType);
                 }
             }
 

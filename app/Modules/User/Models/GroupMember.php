@@ -4,11 +4,13 @@ namespace App\Modules\User\Models;
 
 use App\Modules\Card\Enums\CardStatus;
 use App\Modules\Card\Models\Card;
-use App\Modules\User\Models\MemberIdentity;
+use App\Modules\User\Enums\GroupMemberType;
+use App\Modules\User\Models\GroupMemberIdentity;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class GroupMember extends Model
 {
@@ -16,14 +18,14 @@ class GroupMember extends Model
 
     protected $fillable = [
         'group_id',
-        'user_id',
-        'member_type',
+        'type',
         'name',
         'is_active',
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
+        'type' => GroupMemberType::class,
     ];
 
     public function group(): BelongsTo
@@ -31,19 +33,19 @@ class GroupMember extends Model
         return $this->belongsTo(Group::class);
     }
 
-    public function user(): BelongsTo
+    public function user(): HasOne
     {
-        return $this->belongsTo(User::class);
+        return $this->hasOne(User::class);
     }
 
     public function cards(): HasMany
     {
-        return $this->hasMany(Card::class, 'member_id');
+        return $this->hasMany(Card::class, 'group_member_id');
     }
 
     public function activeCards(): HasMany
     {
-        return $this->hasMany(Card::class, 'member_id')->where('status', CardStatus::ACTIVE);
+        return $this->hasMany(Card::class, 'group_member_id')->where('status', CardStatus::ACTIVE);
     }
 
     public function hasActiveCard(): bool
@@ -53,12 +55,12 @@ class GroupMember extends Model
 
     public function scopePrimary($query)
     {
-        return $query->where('member_type', 'primary');
+        return $query->where('type', 'primary');
     }
 
     public function scopeDependent($query)
     {
-        return $query->where('member_type', 'dependent');
+        return $query->where('type', 'dependent');
     }
 
     public function scopeActive($query)
@@ -68,25 +70,25 @@ class GroupMember extends Model
 
     public function identities(): HasMany
     {
-        return $this->hasMany(MemberIdentity::class);
+        return $this->hasMany(GroupMemberIdentity::class);
     }
 
-    public function primaryIdentity(string $type = null): ?MemberIdentity
+    public function primaryIdentity(?string $type = null): ?GroupMemberIdentity
     {
         $query = $this->identities();
 
         if ($type) {
-            $query->where('identity_type', $type);
+            $query->where('type', $type);
         }
 
         return $query->where('is_primary', true)->first();
     }
 
-    public function addIdentity(string $type, string $value, bool $isPrimary = false): MemberIdentity
+    public function addIdentity(string $type, string $value, bool $isPrimary = false): GroupMemberIdentity
     {
-        $identity = MemberIdentity::firstOrCreate([
-            'identity_type' => $type,
-            'identity_value' => $value,
+        $identity = GroupMemberIdentity::firstOrCreate([
+            'type' => $type,
+            'value' => $value,
         ], [
             'group_member_id' => $this->id,
             'is_primary' => $isPrimary,
@@ -99,29 +101,26 @@ class GroupMember extends Model
         return $identity;
     }
 
-    public function findIdentity(string $type, string $value): ?MemberIdentity
+    public function findIdentity(string $type, string $value): ?GroupMemberIdentity
     {
         return $this->identities()
-            ->where('identity_type', $type)
-            ->where('identity_value', $value)
+            ->where('type', $type)
+            ->where('value', $value)
             ->first();
     }
 
-    public function canUserAccessCards($user): bool
+    public function attachUser(User|int|null $user): self
     {
-        $userPrimaryMember = static::where('user_id', $user->id)
-            ->where('group_id', $this->group_id)
-            ->where('member_type', 'primary')
-            ->first();
-
-        if (! $userPrimaryMember) {
-            return false;
+        if (empty($user)) {
+            return $this;
         }
 
-        if ($this->member_type !== 'dependent') {
-            return false;
-        }
+        $userId = $user instanceof User ? $user->id : $user;
 
-        return true;
+        User::where('id', $userId)->update([
+            'group_member_id' => $this->id,
+        ]);
+
+        return $this;
     }
 }

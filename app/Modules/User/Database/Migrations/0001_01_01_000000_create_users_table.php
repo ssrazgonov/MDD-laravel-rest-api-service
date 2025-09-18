@@ -14,8 +14,7 @@ return new class() extends Migration {
             $table->uuid('id')->primary();
             $table->boolean('is_active')->default(true);
             $table->timestamps();
-
-            $table->index('created_at');
+            $table->unsignedInteger('group_member_id')->nullable();
         });
     }
 

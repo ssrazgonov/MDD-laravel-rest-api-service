@@ -12,7 +12,7 @@ class Group extends Model
 
     protected $fillable = [
         'name',
-        'group_type',
+        'type',
         'is_active',
     ];
 
@@ -25,11 +25,6 @@ class Group extends Model
         return $this->hasMany(GroupMember::class);
     }
 
-    public function users(): HasMany
-    {
-        return $this->hasManyThrough(User::class, GroupMember::class, 'group_id', 'id', 'id', 'user_id');
-    }
-
     public function scopeActive($query)
     {
         return $query->where('is_active', true);
@@ -37,6 +32,6 @@ class Group extends Model
 
     public function scopeFamily($query)
     {
-        return $query->where('group_type', 'family');
+        return $query->where('type', 'family');
     }
 }

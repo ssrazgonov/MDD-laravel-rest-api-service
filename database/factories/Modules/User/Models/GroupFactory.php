@@ -13,7 +13,7 @@ class GroupFactory extends Factory
     {
         return [
             'name' => $this->faker->company(),
-            'group_type' => $this->faker->randomElement(['family', 'organization', 'individual']),
+            'type' => $this->faker->randomElement(['family', 'organization', 'individual']),
             'is_active' => true,
         ];
     }
@@ -21,7 +21,7 @@ class GroupFactory extends Factory
     public function family(): static
     {
         return $this->state(fn (array $attributes) => [
-            'group_type' => 'family',
+            'type' => 'family',
             'name' => 'Семья ' . $this->faker->lastName(),
         ]);
     }
@@ -29,7 +29,7 @@ class GroupFactory extends Factory
     public function individual(): static
     {
         return $this->state(fn (array $attributes) => [
-            'group_type' => 'individual',
+            'type' => 'individual',
             'name' => 'Персональная группа',
         ]);
     }

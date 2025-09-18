@@ -16,7 +16,7 @@ class GroupMemberFactory extends Factory
         return [
             'group_id' => Group::factory(),
             'user_id' => User::factory(),
-            'member_type' => $this->faker->randomElement(['primary', 'dependent']),
+            'type' => $this->faker->randomElement(['primary', 'dependent']),
             'name' => $this->faker->name(),
             'is_active' => true,
         ];
@@ -25,14 +25,14 @@ class GroupMemberFactory extends Factory
     public function primary(): static
     {
         return $this->state(fn (array $attributes) => [
-            'member_type' => 'primary',
+            'type' => 'primary',
         ]);
     }
 
     public function dependent(): static
     {
         return $this->state(fn (array $attributes) => [
-            'member_type' => 'dependent',
+            'type' => 'dependent',
         ]);
     }
 }

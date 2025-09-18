@@ -8,8 +8,8 @@ class CreateMemberDto extends Dto
 {
     public function __construct(
         public readonly int $groupId,
-        public readonly string $userId,
-        public readonly string $memberType = 'dependent',
+        public readonly ?string $userId,
+        public readonly string $type = 'dependent',
         public readonly ?string $name = null,
     ) {
     }

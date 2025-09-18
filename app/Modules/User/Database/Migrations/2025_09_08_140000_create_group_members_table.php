@@ -10,18 +10,13 @@ return new class() extends Migration {
      */
     public function up(): void
     {
-        Schema::create('members', function (Blueprint $table) {
+        Schema::create('group_members', function (Blueprint $table) {
             $table->id();
-            $table->uuid('user_id');
-            $table->string('member_type')->default('primary');
+            $table->unsignedBigInteger('group_id');
+            $table->string('type')->default('primary');
             $table->string('name')->nullable();
             $table->boolean('is_active')->default(true);
             $table->timestamps();
-
-            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
-
-            $table->index(['user_id', 'member_type']);
-            $table->index('created_at');
         });
     }
 

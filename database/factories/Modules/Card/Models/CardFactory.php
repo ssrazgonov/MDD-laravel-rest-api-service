@@ -13,7 +13,7 @@ class CardFactory extends Factory
     public function definition(): array
     {
         return [
-            'member_id' => null, // Will be set when creating
+            'group_member_id' => null, // Will be set when creating
             'hash' => hash('sha256', '4111111111111111'),
             'last_digits' => '1111',
             'status' => CardStatus::ACTIVE,

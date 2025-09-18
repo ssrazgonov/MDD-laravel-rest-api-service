@@ -12,19 +12,12 @@ return new class() extends Migration {
     {
         Schema::create('cards', function (Blueprint $table) {
             $table->id();
-            $table->uuid('user_id');
+            $table->unsignedBigInteger('group_member_id');
             $table->string('hash');
             $table->string('last_digits', 4);
             $table->string('status')->default('active');
             $table->text('comment')->nullable();
-
             $table->timestamps();
-
-            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
-
-            $table->index(['user_id', 'status']);
-            $table->index('hash');
-            $table->index('created_at');
         });
     }
 

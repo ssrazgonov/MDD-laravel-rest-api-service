@@ -29,7 +29,7 @@ class CardResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'member_id' => $this->member_id,
+            'group_member_id' => $this->group_member_id,
             'hash' => $this->hash,
             'last_digits' => $this->last_digits,
             'status' => $this->status,
@@ -47,13 +47,13 @@ class CardResource extends JsonResource
             return CardAccessLevel::VIEW->value;
         }
 
-        $accessControl = $this->cardAccessControlForUser($this->user->id)->first();
+        $accessControl = $this->cardAccessControlForUser($this->user->group_member_id)->first();
 
         return $accessControl ? $accessControl->access_level->value : CardAccessLevel::VIEW->value;
     }
 
-    private function cardAccessControlForUser(string $userId)
+    private function cardAccessControlForUser(int $memberId)
     {
-        return $this->resource->cardAccessControlForUser($userId);
+        return $this->resource->cardAccessControlForUser($memberId);
     }
 }

@@ -4,6 +4,8 @@ use Tests\Helpers\JWTTestHelper;
 
 beforeEach(function () {
     $this->token = JWTTestHelper::generateToken(PRIVATE_KEY_PATH);
+
+    dd($this->token);
 });
 
 it('can create card with valid pan number', function () {
@@ -18,7 +20,7 @@ it('can create card with valid pan number', function () {
             'error',
             'data' => [
                 'id',
-                'member_id',
+                'group_member_id',
                 'hash',
                 'last_digits',
                 'status',
@@ -108,7 +110,7 @@ it('can create card with comment', function () {
             'error',
             'data' => [
                 'id',
-                'member_id',
+                'group_member_id',
                 'hash',
                 'last_digits',
                 'status',
@@ -141,7 +143,7 @@ it('can get user cards list', function () {
             'data' => [
                 '*' => [
                     'id',
-                    'member_id',
+                    'group_member_id',
                     'hash',
                     'last_digits',
                     'status',
@@ -169,7 +171,7 @@ it('can get user cards with active status filter', function () {
             'data' => [
                 '*' => [
                     'id',
-                    'member_id',
+                    'group_member_id',
                     'hash',
                     'last_digits',
                     'status',
@@ -450,7 +452,7 @@ it('can create card without comment', function () {
             'error',
             'data' => [
                 'id',
-                'member_id',
+                'group_member_id',
                 'hash',
                 'last_digits',
                 'status',
@@ -499,7 +501,7 @@ it('can get user cards with null status filter', function () {
             'data' => [
                 '*' => [
                     'id',
-                    'member_id',
+                    'group_member_id',
                     'hash',
                     'last_digits',
                     'status',
@@ -565,7 +567,7 @@ it('rejects comment with special characters', function () {
             'error',
             'data' => [
                 'id',
-                'member_id',
+                'group_member_id',
                 'hash',
                 'last_digits',
                 'status',
@@ -660,7 +662,7 @@ it('validates comment field with exact max length', function () {
             'error',
             'data' => [
                 'id',
-                'member_id',
+                'group_member_id',
                 'hash',
                 'last_digits',
                 'status',
@@ -760,7 +762,7 @@ it('can get card with status history', function () {
         'data' => [
             'card' => [
                     'id',
-                    'member_id',
+                    'group_member_id',
                     'hash',
                     'last_digits',
                     'status',

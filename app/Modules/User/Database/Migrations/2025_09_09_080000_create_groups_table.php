@@ -13,11 +13,9 @@ return new class() extends Migration {
         Schema::create('groups', function (Blueprint $table) {
             $table->id();
             $table->string('name')->nullable();
-            $table->string('group_type')->default('family');
+            $table->string('type')->default('family');
             $table->boolean('is_active')->default(true);
             $table->timestamps();
-
-            $table->index(['group_type', 'is_active']);
         });
     }
 

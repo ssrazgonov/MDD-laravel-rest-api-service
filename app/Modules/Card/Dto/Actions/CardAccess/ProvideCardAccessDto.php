@@ -8,7 +8,7 @@ use App\Modules\Card\Enums\CardAccessLevel;
 class ProvideCardAccessDto extends Dto
 {
     public function __construct(
-        public string $userId,
+        public string $groupMemberId,
         public string $cardId,
         public CardAccessLevel $level,
     ) {

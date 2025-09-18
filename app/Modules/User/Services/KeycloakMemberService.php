@@ -4,9 +4,10 @@ namespace App\Modules\User\Services;
 
 use App\Modules\Card\Enums\CardAccessLevel;
 use App\Modules\Card\Models\CardAccessControl;
+use App\Modules\User\Enums\GroupMemberType;
 use App\Modules\User\Models\Group;
 use App\Modules\User\Models\GroupMember;
-use App\Modules\User\Models\MemberIdentity;
+use App\Modules\User\Models\GroupMemberIdentity;
 use App\Modules\User\Models\User;
 use DomainException;
 use Illuminate\Support\Facades\DB;
@@ -21,9 +22,7 @@ class KeycloakMemberService
     public function processParentJwt(User $user, array $jwtChildren, string $userName): void
     {
         DB::transaction(function () use ($user, $jwtChildren, $userName) {
-            $existingIndividualGroup = Group::whereHas('groupMembers', function ($q) use ($user) {
-                $q->where('user_id', $user->id)->where('member_type', 'primary');
-            })->where('group_type', 'individual')->first();
+            $existingIndividualGroup = $user->groupMember?->group;
 
             if ($existingIndividualGroup && $jwtChildren !== []) {
                 $existingIndividualGroup->update(['group_type' => 'family']);
@@ -36,15 +35,12 @@ class KeycloakMemberService
                 }
             }
 
-            $existingGroupMember = GroupMember::where('group_id', $group->id)
-                ->where('user_id', $user->id)
-                ->first();
+            $existingGroupMember = $user->groupMember;
 
             if (! $existingGroupMember) {
                 $groupMemberData = [
                     'group_id' => $group->id,
-                    'user_id' => $user->id,
-                    'member_type' => 'primary',
+                    'type' => 'primary',
                     'is_active' => true,
                 ];
 
@@ -55,6 +51,8 @@ class KeycloakMemberService
                 $primaryGroupMember = GroupMember::create($groupMemberData);
 
                 $primaryGroupMember->addIdentity('keycloak', $user->id, true);
+
+                $primaryGroupMember->attachUser($user);
             }
 
             $this->syncChildren($group, $user, $jwtChildren);
@@ -67,14 +65,14 @@ class KeycloakMemberService
             $existingGroupMember = $this->getGroupMemberByIdentity('keycloak', $user->id);
 
             if ($existingGroupMember instanceof GroupMember) {
-                if ($existingGroupMember->member_type === 'dependent') {
+                if ($existingGroupMember->type === GroupMemberType::DEPENDENT) {
                     $this->activateChildAccount($existingGroupMember, $user, $userName);
                 }
             } else {
                 if ($userSnils) {
                     $existingGroupMember = $this->getGroupMemberByIdentity('snils', $userSnils);
 
-                    if ($existingGroupMember instanceof GroupMember && $existingGroupMember->member_type === 'dependent') {
+                    if ($existingGroupMember instanceof GroupMember && $existingGroupMember->type === GroupMemberType::DEPENDENT) {
                         $this->activateChildAccount($existingGroupMember, $user, $userName);
 
                         return;
@@ -104,13 +102,7 @@ class KeycloakMemberService
 
     private function createIndividualGroup(User $user, string $userName): void
     {
-        $existingGroupMember = GroupMember::where('user_id', $user->id)
-            ->where('member_type', 'primary')
-            ->first();
-
-        if ($existingGroupMember) {
-            $group = $existingGroupMember->group;
-
+        if ($user->groupMember()->exists()) {
             return;
         }
 
@@ -122,8 +114,7 @@ class KeycloakMemberService
 
         $groupMemberData = [
             'group_id' => $group->id,
-            'user_id' => $user->id,
-            'member_type' => 'primary',
+            'type' => GroupMemberType::PRIMARY,
             'is_active' => true,
         ];
 
@@ -133,12 +124,12 @@ class KeycloakMemberService
 
         $primaryGroupMember = GroupMember::create($groupMemberData);
 
-        $existingKeycloak = MemberIdentity::where('identity_type', 'keycloak')
-            ->where('identity_value', $user->id)
+        $existingKeycloak = GroupMemberIdentity::where('type', 'keycloak')
+            ->where('value', $user->id)
             ->first();
 
         if (! $existingKeycloak) {
-            $primaryGroupMember->addIdentity('keycloak', $user->id, true);
+            $identity = $primaryGroupMember->addIdentity('keycloak', $user->id, true);
         }
     }
 
@@ -147,8 +138,8 @@ class KeycloakMemberService
         foreach ($jwtChildren as $child) {
             if (isset($child['snils']) && ! empty($child['snils'])) {
                 $hashedSnils = hash('sha256', $child['snils']);
-                $existingIdentity = MemberIdentity::where('identity_type', 'snils')
-                    ->where('identity_value', $hashedSnils)
+                $existingIdentity = GroupMemberIdentity::where('type', 'snils')
+                    ->where('value', $hashedSnils)
                     ->first();
 
                 if ($existingIdentity && $existingIdentity->groupMember) {
@@ -159,7 +150,7 @@ class KeycloakMemberService
 
         return Group::create([
             'name' => 'Семья',
-            'group_type' => 'family',
+            'type' => 'family',
             'is_active' => true,
         ]);
     }
@@ -173,8 +164,8 @@ class KeycloakMemberService
 
             $hashedSnils = hash('sha256', $child['snils']);
 
-            $existingIdentity = MemberIdentity::where('identity_type', 'snils')
-                ->where('identity_value', $hashedSnils)
+            $existingIdentity = GroupMemberIdentity::where('type', 'snils')
+                ->where('value', $hashedSnils)
                 ->first();
 
             if ($existingIdentity && $existingIdentity->groupMember) {
@@ -190,8 +181,7 @@ class KeycloakMemberService
                 $childName = trim(($child['lastName'] ?? '') . ' ' . ($child['firstName'] ?? '') . ' ' . ($child['middleName'] ?? ''));
                 $groupMemberData = [
                     'group_id' => $group->id,
-                    'user_id' => null,
-                    'member_type' => 'dependent',
+                    'type' => 'dependent',
                     'is_active' => true,
                 ];
 
@@ -211,7 +201,7 @@ class KeycloakMemberService
         foreach ($childGroupMember->cards as $card) {
             CardAccessControl::firstOrCreate([
                 'card_id' => $card->id,
-                'user_id' => $parent->id,
+                'group_member_id' => $parent->groupMember->id,
             ], [
                 'access_level' => CardAccessLevel::MANAGE,
             ]);
@@ -221,8 +211,8 @@ class KeycloakMemberService
     public function linkChildUser(string $identityType, string $identityValue, User $childUser): ?GroupMember
     {
         $searchValue = $identityType === 'snils' ? hash('sha256', $identityValue) : $identityValue;
-        $existingIdentity = MemberIdentity::where('identity_type', $identityType)
-            ->where('identity_value', $searchValue)
+        $existingIdentity = GroupMemberIdentity::where('type', $identityType)
+            ->where('value', $searchValue)
             ->first();
 
         if ($existingIdentity && $existingIdentity->groupMember) {
@@ -230,14 +220,15 @@ class KeycloakMemberService
 
             DB::transaction(function () use ($existingGroupMember, $childUser) {
                 $updateData = [
-                    'user_id' => $childUser->id,
-                    'member_type' => 'dependent',
+                    'type' => 'dependent',
                     'is_active' => true,
                 ];
 
                 $existingGroupMember->update($updateData);
 
                 $existingGroupMember->addIdentity('keycloak', $childUser->id, false);
+
+                $existingGroupMember->attachUser($childUser);
             });
 
             return $existingGroupMember->fresh();
@@ -249,8 +240,8 @@ class KeycloakMemberService
     public function getGroupMemberByIdentity(string $type, string $value): ?GroupMember
     {
         $searchValue = $type === 'snils' ? hash('sha256', $value) : $value;
-        $identity = MemberIdentity::where('identity_type', $type)
-            ->where('identity_value', $searchValue)
+        $identity = GroupMemberIdentity::where('type', $type)
+            ->where('value', $searchValue)
             ->first();
 
         return $identity?->groupMember;
@@ -267,8 +258,7 @@ class KeycloakMemberService
     ): GroupMember {
         $groupMemberData = [
             'group_id' => $groupId,
-            'user_id' => $userId,
-            'member_type' => $memberType,
+            'type' => $memberType,
             'is_active' => true,
         ];
 
@@ -280,13 +270,14 @@ class KeycloakMemberService
 
         $storedValue = $identityType === 'snils' ? hash('sha256', $identityValue) : $identityValue;
         $groupMember->addIdentity($identityType, $storedValue, $isPrimary);
+        $groupMember->attachUser($userId);
 
         return $groupMember;
     }
 
     public function ensureUserHasPrimaryGroupMember(User $user, string $userName): GroupMember
     {
-        $primaryGroupMember = $user->primaryGroupMember();
+        $primaryGroupMember = $user->primaryGroupMember()->first();
 
         if (! $primaryGroupMember) {
             $this->processIndividualJwt($user, $userName);
