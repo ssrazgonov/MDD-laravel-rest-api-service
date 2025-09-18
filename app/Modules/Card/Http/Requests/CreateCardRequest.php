@@ -15,6 +15,8 @@ class CreateCardRequest extends FormRequest
                 'regex:/^2[0-9]{15,18}$/',
             ],
             'comment' => 'nullable|string|max:256',
+
+            'memberId' => 'nullable|integer|exists:group_members,id',
         ];
     }
 }

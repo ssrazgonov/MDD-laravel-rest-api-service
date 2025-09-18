@@ -8,6 +8,5 @@ class GetCardStatusHistoryDto extends Dto
 {
     public function __construct(public string $cardId)
     {
-        parent::__construct([]);
     }
 }

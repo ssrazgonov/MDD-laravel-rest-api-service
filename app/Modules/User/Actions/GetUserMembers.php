@@ -16,7 +16,6 @@ final class GetUserMembers extends Action
     {
         try {
             if ($dto->memberType === 'dependent') {
-                // Для детей ищем через группы пользователя
                 $user = User::find($dto->userId);
                 if (! $user) {
                     return new GetUserMembersResultDto(
@@ -33,7 +32,6 @@ final class GetUserMembers extends Action
                 $query = GroupMember::where('group_id', $primaryMember->group_id)
                     ->where('member_type', 'dependent');
             } else {
-                // Для других типов - по user_id
                 $query = GroupMember::where('user_id', $dto->userId);
 
                 if ($dto->memberType) {

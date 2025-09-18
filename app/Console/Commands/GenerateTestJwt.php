@@ -17,6 +17,8 @@ class GenerateTestJwt extends Command
     protected $signature = 'jwt:generate
                             {--type=parent : Type of JWT: parent, child, adult}
                             {--children=1 : Number of children (for parent type)}
+                            {--child-snils= : Comma-separated list of SNILS for children (optional)}
+                            {--user-snils= : SNILS for the user (optional)}
                             {--realm=residents : Keycloak realm: residents, kids}
                             {--user-id= : Custom user ID (UUID will be generated if not provided)}';
 
@@ -25,7 +27,7 @@ class GenerateTestJwt extends Command
      *
      * @var string
      */
-    protected $description = 'Generate test JWT tokens for different user scenarios';
+    protected $description = 'Generate test JWT tokens for different user scenarios. Use --child-snils to specify SNILS for children and --user-snils to specify SNILS for the user.';
 
     /**
      * Execute the console command.
@@ -34,16 +36,28 @@ class GenerateTestJwt extends Command
     {
         $type = $this->option('type');
         $childrenCount = (int) $this->option('children');
+        $childSnils = $this->option('child-snils');
+        $userSnils = $this->option('user-snils');
         $realm = $this->option('realm');
         $customUserId = $this->option('user-id');
 
         $userId = $customUserId ?: (string) Uuid::uuid4();
 
+        $childSnilsArray = [];
+        if ($childSnils) {
+            $childSnilsArray = array_map('trim', explode(',', $childSnils));
+            $this->info('Using provided SNILS for children: ' . implode(', ', $childSnilsArray));
+        }
+
+        if ($userSnils) {
+            $this->info("Using provided SNILS for user: {$userSnils}");
+        }
+
         $this->info("Generating JWT for: {$type}");
         $this->info("User ID: {$userId}");
         $this->info("Realm: {$realm}");
 
-        $payload = $this->buildPayload($type, $userId, $childrenCount, $realm);
+        $payload = $this->buildPayload($type, $userId, $childrenCount, $childSnilsArray, $userSnils, $realm);
 
         $this->info("\nPayload:");
         $this->line(json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
@@ -59,49 +73,111 @@ class GenerateTestJwt extends Command
         return Command::SUCCESS;
     }
 
-    private function buildPayload(string $type, string $userId, int $childrenCount, string $realm): array
+    private function buildPayload(string $type, string $userId, int $childrenCount, array $childSnilsArray, ?string $userSnils, string $realm): array
     {
-        $basePayload = [
-            'iss' => "https://keycloak.example.com/realms/{$realm}",
-            'aud' => 'resident-card-service',
-            'sub' => $userId,
-            'iat' => time(),
-            'exp' => time() + 3600, // 1 hour
-            'realm' => $realm,
-            'preferred_username' => $this->generateUsername($type, $userId),
-            'name' => $this->generateFullName($type),
-            'given_name' => $this->generateFirstName($type),
-            'family_name' => $this->generateLastName($type),
-            'email' => $this->generateEmail($type, $userId),
-            'email_verified' => true,
-            'resource_access' => $this->generateResourceAccess(),
-        ];
+        $iat = time();
+        $exp = $iat + (365 * 24 * 3600);
 
+        $kids = [];
         switch ($type) {
             case 'parent':
-                $basePayload['children'] = $this->generateChildren($childrenCount);
-                $this->info("Generated {$childrenCount} children");
+                $kids = $this->generateKids($childrenCount, $childSnilsArray);
                 break;
-
             case 'child':
-                // Для ребенка добавляем external_id в payload
-                $basePayload['external_id'] = $this->generateSnils();
-                $basePayload['child_info'] = [
-                    'name' => $this->generateFullName('child'),
-                    'birth_date' => date('Y-m-d', strtotime('-' . rand(5, 15) . ' years')),
-                ];
-                break;
-
-            case 'adult':
-                // Взрослый без детей
-                $basePayload['adult_info'] = [
-                    'name' => $this->generateFullName('adult'),
-                    'email' => $this->generateEmail('adult', $userId),
-                ];
+                $kids = [$this->generateSingleKid($childSnilsArray[0] ?? null)];
                 break;
         }
+        $kidsJson = json_encode($kids, JSON_UNESCAPED_UNICODE);
 
-        return $basePayload;
+        return [
+            'exp' => $exp,
+            'iat' => $iat,
+            'auth_time' => $iat,
+            'jti' => (string) Uuid::uuid4(),
+            'iss' => 'https://test5.admlr.lipetsk.ru/auth/realms/residents',
+            'aud' => 'account',
+            'sub' => $userId,
+            'typ' => 'Bearer',
+            'azp' => 'resident_test',
+            'nonce' => (string) Uuid::uuid4(),
+            'session_state' => (string) Uuid::uuid4(),
+            'acr' => '1',
+            'allowed-origins' => [
+                'https://test3.admlr.lipetsk.ru',
+            ],
+            'realm_access' => [
+                'roles' => [
+                    'offline_access',
+                    'uma_authorization',
+                ],
+            ],
+            'resource_access' => [
+                'resident_test' => [
+                    'roles' => [
+                        'resident',
+                    ],
+                ],
+                'account' => [
+                    'roles' => [
+                        'manage-account',
+                        'manage-account-links',
+                        'view-profile',
+                    ],
+                ],
+            ],
+            'scope' => 'openid',
+            'preferred_username' => '9066839057',
+            'uuid' => $userId,
+            'snils' => $userSnils ?? $this->generateSnils(),
+            'kids' => $kidsJson,
+        ];
+    }
+
+    private function generateKids(int $count, array $childSnilsArray = []): array
+    {
+        $kids = [];
+
+        for ($i = 0; $i < $count; $i++) {
+            $snils = $childSnilsArray[$i] ?? null;
+            $kids[] = $this->generateSingleKid($snils);
+        }
+
+        return $kids;
+    }
+
+    private function generateSingleKid(?string $snils = null): array
+    {
+        return [
+            'stateFacts' => ['Identifiable'],
+            'firstName' => $this->generateFirstName('child'),
+            'lastName' => $this->generateLastName('child'),
+            'middleName' => $this->generateMiddleName(),
+            'birthDate' => date('d.m.Y', strtotime('-' . rand(5, 15) . ' years')),
+            'gender' => rand(0, 1) ? 'M' : 'F',
+            'trusted' => false,
+            'linkCode' => $this->generateLinkCode(),
+            'updatedOn' => time(),
+            'id' => rand(100000000, 999999999),
+            'eTag' => $this->generateETag(),
+            'snils' => $snils ?? $this->generateSnils(),
+        ];
+    }
+
+    private function generateMiddleName(): string
+    {
+        $middleNames = ['Сергеевич', 'Александрович', 'Иванович', 'Петрович', 'Андреевич'];
+
+        return $middleNames[array_rand($middleNames)];
+    }
+
+    private function generateLinkCode(): string
+    {
+        return str_pad((string) rand(1000000000000000, 9999999999999999), 16, '0', STR_PAD_LEFT);
+    }
+
+    private function generateETag(): string
+    {
+        return strtoupper(md5(uniqid()));
     }
 
     private function generateChildren(int $count): array
@@ -122,7 +198,6 @@ class GenerateTestJwt extends Command
 
     private function generateSnils(): string
     {
-        // Генерируем СНИЛС в формате XXX-XXX-XXX XX
         $parts = [];
         for ($i = 0; $i < 3; $i++) {
             $parts[] = str_pad((string) rand(100, 999), 3, '0', STR_PAD_LEFT);
@@ -198,15 +273,12 @@ class GenerateTestJwt extends Command
 
     private function generateJwt(array $payload): string
     {
-        // Получаем приватный ключ для подписи
         $privateKey = $this->getPrivateKey();
 
-        // Для encode используем строковый ключ (как в старой версии)
-        // Создаем header с пустым kid (Firebase\JWT ожидает его наличия)
         $header = [
             'alg' => 'RS256',
             'typ' => 'JWT',
-            'kid' => '', // Пустой kid для простого случая
+            'kid' => '',
         ];
 
         return JWT::encode($payload, $privateKey, 'RS256', null, $header);
@@ -214,7 +286,6 @@ class GenerateTestJwt extends Command
 
     private function getPrivateKey(): string
     {
-        // Используем файл private.pem для генерации JWT
         $privateKeyPath = base_path('tests/fixtures/auth/private.pem');
 
         if (! file_exists($privateKeyPath)) {

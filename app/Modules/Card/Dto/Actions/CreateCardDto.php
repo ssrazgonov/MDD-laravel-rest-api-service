@@ -9,7 +9,7 @@ class CreateCardDto extends Dto
     public function __construct(
         public string $pan,
         public ?string $comment,
-        public ?int $memberId = null, // Опционально, если null - используем primary member
+        public ?int $memberId = null,
     ) {
         parent::__construct([]);
     }

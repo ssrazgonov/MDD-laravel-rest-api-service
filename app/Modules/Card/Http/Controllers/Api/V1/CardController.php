@@ -6,15 +6,20 @@ use App\Modules\Card\Actions\ActivateCard;
 use App\Modules\Card\Actions\CreateCard;
 use App\Modules\Card\Actions\DeactivateCard;
 use App\Modules\Card\Actions\GetCardWithHistory;
+use App\Modules\Card\Actions\GetMemberCard;
+use App\Modules\Card\Actions\GetMemberCards;
 use App\Modules\Card\Actions\GetUserCards;
 use App\Modules\Card\Dto\Actions\ActivateCardDto;
 use App\Modules\Card\Dto\Actions\CreateCardDto;
 use App\Modules\Card\Dto\Actions\DeactivateCardDto;
 use App\Modules\Card\Dto\Actions\GetCardWithHistoryDto;
+use App\Modules\Card\Dto\Actions\GetMemberCardDto;
+use App\Modules\Card\Dto\Actions\GetMemberCardsDto;
 use App\Modules\Card\Dto\Actions\GetUserCardsDto;
 use App\Modules\Card\Enums\CardStatus;
 use App\Modules\Card\Http\Requests\CreateCardRequest;
 use App\Modules\Card\Http\Requests\GetUserCardsRequest;
+use App\Modules\Card\Http\Resources\CardResource;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Foundation\Validation\ValidatesRequests;
@@ -29,20 +34,67 @@ class CardController extends Controller
     use ValidatesRequests;
 
     /**
-     * @response array{status: bool, error: array{error: string, code: int} , data: Card[]}
+     * Get list of user's cards.
+     *
+     * @response array{
+     *   status: bool,
+     *   error: array{message: string, code: int},
+     *   data: array{
+     *     id: int,
+     *     member_id: int,
+     *     hash: string,
+     *     last_digits: string,
+     *     status: string,
+     *     comment: string|null,
+     *     created_at: string,
+     *     updated_at: string,
+     *     access_level: "view"|"manage"
+     *   }[]
+     * }
      */
     public function index(GetUserCardsRequest $request, GetUserCards $getUserCards)
     {
         $dto = new GetUserCardsDto(userId: Auth::id(), status: CardStatus::tryFrom($request->status));
 
+        $result = $getUserCards->handleResult($getUserCards($dto));
+
+        if ($result->data) {
+            $user = Auth::user();
+            $transformedData = $result->data->map(function ($card) use ($user) {
+                return new CardResource($card, $user);
+            });
+
+            return response()->json([
+                'status' => $result->status,
+                'data' => $transformedData,
+                'error' => $result->error,
+            ], Response::HTTP_OK);
+        }
+
         return response()->json()->api(
-            $getUserCards->handleResult($getUserCards($dto)),
+            $result,
             Response::HTTP_OK
         );
     }
 
     /**
-     * @response array{status: bool, error: array{error: string, code: int} , data: Card}
+     * Create a new card.
+     *
+     * @response array{
+     *   status: bool,
+     *   error: array{error: string, code: int},
+     *   data: array{
+     *     id: int,
+     *     member_id: int,
+     *     hash: string,
+     *     last_digits: string,
+     *     status: string,
+     *     comment: string|null,
+     *     created_at: string,
+     *     updated_at: string,
+     *     access_level: "view"|"manage"
+     *   }
+     * }
      */
     public function store(CreateCardRequest $request, CreateCard $createCard)
     {
@@ -50,8 +102,21 @@ class CardController extends Controller
         $userId = Auth::id();
         $createCardData['user_id'] = $userId;
 
+        $result = $createCard->handleResult($createCard(CreateCardDto::fromArray($createCardData)));
+
+        if ($result->data) {
+            $user = Auth::user();
+            $transformedData = new CardResource($result->data, $user);
+
+            return response()->json([
+                'status' => $result->status,
+                'data' => $transformedData,
+                'error' => $result->error,
+            ], Response::HTTP_CREATED);
+        }
+
         return response()->json()->api(
-            $createCard->handleResult($createCard(CreateCardDto::fromArray($createCardData))),
+            $result,
             Response::HTTP_CREATED
         );
     }
@@ -79,13 +144,142 @@ class CardController extends Controller
     }
 
     /**
-     * @response array{status: bool, error: array{error: string, code: int} , data: array{card: Card, history: CardStatusHistory[]}}
+     * Get card details with history.
+     *
+     * @response array{
+     *   status: bool,
+     *   error: array{error: string, code: int},
+     *   data: array{
+     *     card: array{
+     *       id: int,
+     *       member_id: int,
+     *       hash: string,
+     *       last_digits: string,
+     *       status: string,
+     *       comment: string|null,
+     *       created_at: string,
+     *       updated_at: string,
+     *       access_level: "view"|"manage"
+     *     },
+     *     history: mixed[]
+     *   }
+     * }
      */
     public function show(int $id, GetCardWithHistory $getCardWithHistory)
     {
+        $result = $getCardWithHistory->handleResult($getCardWithHistory(new GetCardWithHistoryDto(id: $id, user: Auth::user())));
+
+        if ($result->data && isset($result->data['card'])) {
+            $user = Auth::user();
+            $transformedCard = new CardResource($result->data['card'], $user);
+            $transformedData = [
+                'card' => $transformedCard,
+                'history' => $result->data['history'],
+            ];
+
+            return response()->json([
+                'status' => $result->status,
+                'data' => $transformedData,
+                'error' => $result->error,
+            ], Response::HTTP_OK);
+        }
+
         return response()->json()->api(
-            $getCardWithHistory->handleResult($getCardWithHistory(new GetCardWithHistoryDto(id: $id, user: Auth::user()))),
+            $result,
             Response::HTTP_OK,
+        );
+    }
+
+    /**
+     * Get cards for a specific group member.
+     *
+     * @response array{
+     *   status: bool,
+     *   error: array{error: string, code: int},
+     *   data: array{
+     *     id: int,
+     *     member_id: int,
+     *     hash: string,
+     *     last_digits: string,
+     *     status: string,
+     *     comment: string|null,
+     *     created_at: string,
+     *     updated_at: string,
+     *     access_level: "view"|"manage"
+     *   }[]
+     * }
+     */
+    public function getMemberCards(int $memberId, GetMemberCards $getMemberCards)
+    {
+        $dto = new GetMemberCardsDto(
+            memberId: $memberId,
+            user: Auth::user()
+        );
+
+        $result = $getMemberCards->handleResult($getMemberCards($dto));
+
+        if ($result->data) {
+            $user = Auth::user();
+            $transformedData = $result->data->map(function ($card) use ($user) {
+                return new CardResource($card, $user);
+            });
+
+            return response()->json([
+                'status' => $result->status,
+                'data' => $transformedData,
+                'error' => $result->error,
+            ], Response::HTTP_OK);
+        }
+
+        return response()->json()->api(
+            $result,
+            Response::HTTP_OK
+        );
+    }
+
+    /**
+     * Get specific card for a group member.
+     *
+     * @response array{
+     *   status: bool,
+     *   error: array{error: string, code: int},
+     *   data: array{
+     *     id: int,
+     *     member_id: int,
+     *     hash: string,
+     *     last_digits: string,
+     *     status: string,
+     *     comment: string|null,
+     *     created_at: string,
+     *     updated_at: string,
+     *     access_level: "view"|"manage"
+     *   }
+     * }
+     */
+    public function getMemberCard(int $memberId, int $cardId, GetMemberCard $getMemberCard)
+    {
+        $dto = new GetMemberCardDto(
+            memberId: $memberId,
+            cardId: $cardId,
+            user: Auth::user()
+        );
+
+        $result = $getMemberCard->handleResult($getMemberCard($dto));
+
+        if ($result->data) {
+            $user = Auth::user();
+            $transformedData = new CardResource($result->data, $user);
+
+            return response()->json([
+                'status' => $result->status,
+                'data' => $transformedData,
+                'error' => $result->error,
+            ], Response::HTTP_OK);
+        }
+
+        return response()->json()->api(
+            $result,
+            Response::HTTP_OK
         );
     }
 }
