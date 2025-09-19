@@ -13,7 +13,7 @@ class GroupFactory extends Factory
     {
         return [
             'name' => $this->faker->company(),
-            'type' => $this->faker->randomElement(['family', 'organization', 'individual']),
+            'type' => $this->faker->randomElement(['family', 'individual']),
             'is_active' => true,
         ];
     }

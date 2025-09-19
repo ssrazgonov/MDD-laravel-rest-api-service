@@ -1,18 +1,18 @@
 <?php
 
+use App\Modules\Card\Enums\CardAccessLevel;
+use App\Modules\User\Models\User;
 use Tests\Helpers\JWTTestHelper;
 
 beforeEach(function () {
     $this->token = JWTTestHelper::generateToken(PRIVATE_KEY_PATH);
-
-    dd($this->token);
 });
 
-it('can create card with valid pan number', function () {
+it('can create card with valid pan number', function (string $pan, string $digit) {
     $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
-    ->postJson('/api/v1/cards', [
-        'pan' => '2234567891234567',
-    ]);
+        ->postJson('/api/v1/cards', [
+            'pan' => $pan,
+        ]);
 
     $response->assertStatus(201)
         ->assertJsonStructure([
@@ -28,14 +28,22 @@ it('can create card with valid pan number', function () {
                 'created_at',
                 'updated_at',
             ],
+        ])
+        ->assertJson([
+            'data' => ['last_digits' => $digit],
         ]);
-});
+})->with([
+    ['2200123456789000', '9000'],
+    ['2200123456789001', '9001'],
+    ['2200123456789002', '9002'],
+    ['2200123456789003', '9003'],
+]);
 
-it('cannot create card with bad pan number', function () {
+it('cannot create card with bad pan number', function (string $pan) {
     $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
-    ->postJson('/api/v1/cards', [
-        'pan' => '1234567891234567',
-    ]);
+        ->postJson('/api/v1/cards', [
+            'pan' => $pan,
+        ]);
 
     $response->assertStatus(400)
         ->assertJsonStructure([
@@ -44,21 +52,55 @@ it('cannot create card with bad pan number', function () {
                 'code',
                 'message',
             ],
+        ])
+        ->assertJson([
+            'error' => [
+                'message' => 'The pan field format is invalid.',
+            ],
         ]);
-});
+})->with([
+    '2200',
+    '123456789',
+    '1234567890123456',
+    '3200123456789003',
+]);
+
+it('cannot create card with empty pan number', function (string $pan) {
+    $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
+        ->postJson('/api/v1/cards', [
+            'pan' => $pan,
+        ]);
+
+    $response->assertStatus(400)
+        ->assertJsonStructure([
+            'status',
+            'error' => [
+                'code',
+                'message',
+            ],
+        ])
+        ->assertJson([
+            'error' => [
+                'message' => 'The pan field is required.',
+            ],
+        ]);
+})->with([
+    '',
+    ' ',
+]);
 
 it('cannot create same card for user', function () {
     $firstResponse = $this->withHeader('Authorization', 'Bearer ' . $this->token)
-    ->postJson('/api/v1/cards', [
-        'pan' => '2234567891234567',
-    ]);
+        ->postJson('/api/v1/cards', [
+            'pan' => '2234567891234567',
+        ]);
 
     $firstResponse->assertStatus(201);
 
     $secondResponse = $this->withHeader('Authorization', 'Bearer ' . $this->token)
-    ->postJson('/api/v1/cards', [
-        'pan' => '2234567891234567',
-    ]);
+        ->postJson('/api/v1/cards', [
+            'pan' => '2234567891234567',
+        ]);
 
     $secondResponse->assertStatus(400)
         ->assertJsonStructure([
@@ -71,11 +113,11 @@ it('cannot create same card for user', function () {
         ]);
 
     $secondResponse->assertJson([
-            'error' => [
-                'message' => __('card::errors.already_exists'),
-                'code' => 400,
-            ],
-        ]);
+        'error' => [
+            'message' => __('card::errors.already_exists'),
+            'code' => 400,
+        ],
+    ]);
 });
 
 it('cannot create card for not authenticated', function () {
@@ -91,18 +133,18 @@ it('cannot create card for not authenticated', function () {
         ]);
 
     $response->assertJson([
-            'error' => [
-                'message' => 'Unauthenticated.',
-            ],
-        ]);
+        'error' => [
+            'message' => 'Unauthenticated.',
+        ],
+    ]);
 });
 
 it('can create card with comment', function () {
     $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
-    ->postJson('/api/v1/cards', [
-        'pan' => '2234567891234568',
-        'comment' => 'Test card with comment',
-    ]);
+        ->postJson('/api/v1/cards', [
+            'pan' => '2234567891234568',
+            'comment' => 'Test card with comment',
+        ]);
 
     $response->assertStatus(201)
         ->assertJsonStructure([
@@ -226,7 +268,7 @@ it('can activate existing card', function () {
     $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
         ->postJson("/api/v1/cards/{$cardId}/activate");
 
-    $response->assertStatus(201)
+    $response->assertStatus(200)
         ->assertJsonStructure([
             'status',
             'error',
@@ -245,7 +287,7 @@ it('can deactivate existing card', function () {
     $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
         ->postJson("/api/v1/cards/{$cardId}/deactivate");
 
-    $response->assertStatus(201)
+    $response->assertStatus(200)
         ->assertJsonStructure([
             'status',
             'error',
@@ -672,35 +714,36 @@ it('validates comment field with exact max length', function () {
             ],
         ]);
 });
+
 it('cannot activate card without manage access', function () {
-    $createResponse = $this->withHeader('Authorization', 'Bearer ' . $this->token)
-        ->postJson('/api/v1/cards', [
-            'pan' => '2234567891234586',
+    $user = User::factory()->create();
+
+    $token = JWTTestHelper::generateTokenForUser($user->id, PRIVATE_KEY_PATH);
+
+    $card = $this->createCardForGroupMember($user->groupMember, CardAccessLevel::VIEW, status: false);
+
+    $response = $this->withHeader('Authorization', 'Bearer ' . $token)
+        ->postJson("/api/v1/cards/{$card->id}/activate");
+
+    $response->assertStatus(403)
+        ->assertJson([
+            'error' => [
+                'message' => __('card::errors.card_access_denied'),
+            ],
         ]);
-
-    $cardId = $createResponse->json('data.id');
-
-    $this->withHeader('Authorization', 'Bearer ' . $this->token)
-        ->postJson("/api/v1/cards/{$cardId}/deactivate");
-
-    $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
-        ->postJson("/api/v1/cards/{$cardId}/activate");
-
-    $response->assertStatus(201);
 });
 
 it('cannot deactivate card without manage access', function () {
-    $createResponse = $this->withHeader('Authorization', 'Bearer ' . $this->token)
-        ->postJson('/api/v1/cards', [
-            'pan' => '2234567891234587',
-        ]);
+    $user = User::factory()->create();
 
-    $cardId = $createResponse->json('data.id');
+    $token = JWTTestHelper::generateTokenForUser($user->id, PRIVATE_KEY_PATH);
 
-    $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
-        ->postJson("/api/v1/cards/{$cardId}/deactivate");
+    $card = $this->createCardForGroupMember($user->groupMember, CardAccessLevel::VIEW, status: true);
 
-    $response->assertStatus(201);
+    $response = $this->withHeader('Authorization', 'Bearer ' . $token)
+        ->postJson("/api/v1/cards/{$card->id}/deactivate");
+
+    $response->assertStatus(403);
 });
 
 it('can activate card with manage access', function () {
@@ -717,7 +760,7 @@ it('can activate card with manage access', function () {
     $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
         ->postJson("/api/v1/cards/{$cardId}/activate");
 
-    $response->assertStatus(201)
+    $response->assertStatus(200)
         ->assertJsonStructure([
             'status',
             'error',
@@ -736,7 +779,7 @@ it('can deactivate card with manage access', function () {
     $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
         ->postJson("/api/v1/cards/{$cardId}/deactivate");
 
-    $response->assertStatus(201)
+    $response->assertStatus(200)
         ->assertJsonStructure([
             'status',
             'error',
@@ -756,11 +799,11 @@ it('can get card with status history', function () {
         ->getJson("/api/v1/cards/{$cardId}");
 
     $response->assertStatus(200)
-    ->assertJsonStructure([
-        'status',
-        'error',
-        'data' => [
-            'card' => [
+        ->assertJsonStructure([
+            'status',
+            'error',
+            'data' => [
+                'card' => [
                     'id',
                     'group_member_id',
                     'hash',
@@ -769,7 +812,7 @@ it('can get card with status history', function () {
                     'comment',
                     'created_at',
                     'updated_at',
-                    ],
+                ],
                 'history' => [
                     '*' => [
                         'id',
@@ -781,8 +824,8 @@ it('can get card with status history', function () {
                         'updated_at',
                     ],
                 ],
-        ],
-    ]);
+            ],
+        ]);
 });
 
 it('cannot get non-existent card', function () {

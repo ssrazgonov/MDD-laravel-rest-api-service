@@ -2,11 +2,14 @@
 
 namespace App\Modules\User\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class GroupMemberIdentity extends Model
 {
+    use HasFactory;
+
     protected $fillable = [
         'group_member_id',
         'type',

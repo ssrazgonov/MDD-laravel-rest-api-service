@@ -4,7 +4,6 @@ namespace Database\Factories\Modules\User\Models;
 
 use App\Modules\User\Models\Group;
 use App\Modules\User\Models\GroupMember;
-use App\Modules\User\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 class GroupMemberFactory extends Factory
@@ -15,7 +14,6 @@ class GroupMemberFactory extends Factory
     {
         return [
             'group_id' => Group::factory(),
-            'user_id' => User::factory(),
             'type' => $this->faker->randomElement(['primary', 'dependent']),
             'name' => $this->faker->name(),
             'is_active' => true,

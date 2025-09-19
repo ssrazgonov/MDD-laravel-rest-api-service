@@ -34,6 +34,11 @@ class Card extends Model
         return $this->belongsTo(GroupMember::class, 'group_member_id');
     }
 
+    public function cardAccessControl(): HasOne
+    {
+        return $this->hasOne(CardAccessControl::class);
+    }
+
     public function cardAccessControlForUser(int $memberId): HasOne
     {
         return $this->hasOne(CardAccessControl::class)->where('group_member_id', $memberId);

@@ -2,6 +2,7 @@
 
 namespace Database\Factories\Modules\User\Models;
 
+use App\Modules\User\Models\GroupMember;
 use App\Modules\User\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
@@ -23,6 +24,7 @@ class UserFactory extends Factory
         return [
             'id' => (string) Str::uuid(),
             'is_active' => true,
+            'group_member_id' => GroupMember::factory(),
         ];
     }
 }

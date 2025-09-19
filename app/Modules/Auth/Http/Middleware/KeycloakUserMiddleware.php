@@ -58,9 +58,7 @@ class KeycloakUserMiddleware
             );
         }
 
-        if (Auth::check() && ! Auth::id()) {
-            Auth::setUser($user);
-        }
+        Auth::setUser($user->refresh());
 
         return $next($request);
     }

@@ -5,18 +5,20 @@ namespace App\Modules\Card\Models;
 use App\Modules\Card\Enums\CardAccessLevel;
 use App\Modules\User\Models\GroupMember;
 use App\Modules\User\Models\User;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class CardAccessControl extends Model
 {
+    use HasFactory;
+
     public $timestamps = false;
 
     protected $fillable = [
         'card_id',
         'group_member_id',
         'access_level',
-        'created_by',
     ];
 
     protected $casts = [
@@ -30,7 +32,7 @@ class CardAccessControl extends Model
         return $this->belongsTo(Card::class);
     }
 
-    public function member(): BelongsTo
+    public function groupMember(): BelongsTo
     {
         return $this->belongsTo(GroupMember::class);
     }

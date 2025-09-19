@@ -131,6 +131,8 @@ class KeycloakMemberService
         if (! $existingKeycloak) {
             $identity = $primaryGroupMember->addIdentity('keycloak', $user->id, true);
         }
+
+        $primaryGroupMember->attachUser($user);
     }
 
     private function findOrCreateGroup(array $jwtChildren): Group
