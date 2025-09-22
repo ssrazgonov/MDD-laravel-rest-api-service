@@ -1,6 +1,7 @@
 <?php
 
 use App\Modules\Card\CardModule;
+use App\Modules\S2P\S2PModule;
 use App\Modules\User\UserModule;
 
 return [
@@ -17,5 +18,6 @@ return [
     'modules' => [
         UserModule::class,
         CardModule::class,
+        S2PModule::class,
     ],
 ];
