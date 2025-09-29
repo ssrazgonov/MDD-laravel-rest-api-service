@@ -4,6 +4,7 @@ namespace App\Base;
 
 use App\Contracts\Dto as DtoContract;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use ReflectionClass;
 use UnitEnum;
@@ -12,8 +13,7 @@ abstract class Dto implements DtoContract
 {
     public function __construct(array $data)
     {
-        $validated = $this->validateData($data);
-        $this->fillProperties($validated);
+        $this->fillProperties($data);
     }
 
     protected function rules(): array
@@ -21,7 +21,7 @@ abstract class Dto implements DtoContract
         return [];
     }
 
-    protected function validateData(array $data): array
+    public function validateData(array $data): array
     {
         $validator = Validator::make($data, $this->rules());
 
@@ -56,7 +56,7 @@ abstract class Dto implements DtoContract
 
         foreach ($parameters as $param) {
             $name = $param->getName();
-            $key = self::snakeCase($name);
+            $key = Str::snake($name);
 
             $value = $data[$name] ?? $data[$key] ?? null;
 
@@ -77,11 +77,6 @@ abstract class Dto implements DtoContract
         }
 
         return new static(...$args);
-    }
-
-    private static function snakeCase(string $input): string
-    {
-        return strtolower((string) preg_replace('/(?<!^)[A-Z]/', '_$0', $input));
     }
 
     public function validate(): bool

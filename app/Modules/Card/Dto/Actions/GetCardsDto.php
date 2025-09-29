@@ -5,11 +5,12 @@ namespace App\Modules\Card\Dto\Actions;
 use App\Base\Dto;
 use App\Modules\Card\Enums\CardStatus;
 
-class GetUserCardsDto extends Dto
+class GetCardsDto extends Dto
 {
     public function __construct(
-        public string $userId,
-        public ?CardStatus $status = null
+        public ?int $memberId = null,
+        public ?CardStatus $status = null,
+        public object $user,
     ) {
     }
 }

@@ -2,17 +2,22 @@
 
 namespace App\Modules\Card\Models;
 
+use App\Modules\Card\Enums\CardAccessLevel;
 use App\Modules\Card\Enums\CardStatus;
 use App\Modules\User\Models\GroupMember;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Support\Facades\Auth;
 
 class Card extends Model
 {
     use HasFactory;
+
+    public bool $access_level;
 
     protected $fillable = [
         'group_member_id',
@@ -26,9 +31,6 @@ class Card extends Model
         'status' => CardStatus::class,
     ];
 
-    protected $appends = [
-    ];
-
     public function groupMember(): BelongsTo
     {
         return $this->belongsTo(GroupMember::class, 'group_member_id');
@@ -39,9 +41,9 @@ class Card extends Model
         return $this->hasOne(CardAccessControl::class);
     }
 
-    public function cardAccessControlForUser(int $memberId): HasOne
+    public function cardAccessControlForCurrentUser(): ?CardAccessLevel
     {
-        return $this->hasOne(CardAccessControl::class)->where('group_member_id', $memberId);
+        return $this->cardAccessControl()->where('group_member_id', Auth::user()?->group_member_id)->first()->access_level;
     }
 
     public static function existsForMemberWithHash(int $memberId, string $hashedPan): bool
@@ -73,5 +75,10 @@ class Card extends Model
     public function scopeStatusFilter(Builder $query, ?CardStatus $status): Builder
     {
         return $status instanceof CardStatus ? $query->where('status', $status->value) : $query;
+    }
+
+    public function statusHistory(): HasMany
+    {
+        return $this->hasMany(CardStatusHistory::class);
     }
 }

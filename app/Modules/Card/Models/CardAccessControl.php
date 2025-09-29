@@ -45,9 +45,9 @@ class CardAccessControl extends Model
             ->exists();
     }
 
-    public static function canUserViewCard(User $user, Card $card): bool
+    public static function canUserViewCard(User $user, int $cardId): bool
     {
-        return self::where('card_id', $card->id)
+        return self::where('card_id', $cardId)
             ->where('group_member_id', $user->groupMember->id)
             ->whereIn('access_level', [CardAccessLevel::VIEW, CardAccessLevel::MANAGE])
             ->exists();

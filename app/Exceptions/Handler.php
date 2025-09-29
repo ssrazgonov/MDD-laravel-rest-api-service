@@ -2,6 +2,8 @@
 
 namespace App\Exceptions;
 
+use DomainException;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
@@ -34,7 +36,9 @@ class Handler extends ExceptionHandler
         return match (true) {
             $exception instanceof ModelNotFoundException => 404,
             $exception instanceof AuthenticationException => 401,
+            $exception instanceof AuthorizationException => 403,
             $exception instanceof RuntimeException => $exception->getCode(),
+            $exception instanceof DomainException => $exception->getCode(),
             $exception instanceof ValidationException => 400,
             default => 500
         };

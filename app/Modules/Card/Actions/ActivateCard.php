@@ -3,7 +3,6 @@
 namespace App\Modules\Card\Actions;
 
 use App\Base\Action;
-use App\Base\ErrorDto;
 use App\Modules\Card\Actions\StatusHistory\CreateCardStatusHistory;
 use App\Modules\Card\Dto\Actions\ActivateCardDto;
 use App\Modules\Card\Dto\Actions\DeactivateCardDto;
@@ -14,9 +13,7 @@ use App\Modules\Card\Models\Card;
 use App\Modules\Card\Models\CardAccessControl;
 use DomainException;
 use Illuminate\Auth\Access\AuthorizationException;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\DB;
-use Throwable;
 
 final class ActivateCard extends Action
 {
@@ -28,9 +25,7 @@ final class ActivateCard extends Action
 
     public function __invoke(ActivateCardDto $dto): ActivateCardResultDto
     {
-        DB::beginTransaction();
-
-        try {
+        return DB::transaction(function () use ($dto) {
             $card = Card::findOrFail($dto->id);
 
             if ($dto->user && ! CardAccessControl::canUserManageCard($dto->user, $card)) {
@@ -42,40 +37,16 @@ final class ActivateCard extends Action
             }
 
             if ($card->groupMember->hasActiveCard()) {
-                $this->handleResult(($this->deactivateCard)(
-                    new DeactivateCardDto(id: $card->groupMember->activeCards()->select('id')->first()->id)
-                ));
+                ($this->deactivateCard)(new DeactivateCardDto(id: $card->groupMember->activeCards()->select('id')->first()->id));
             }
 
             $card->update([
                 'status' => CardStatus::ACTIVE,
             ]);
 
-            $this->handleResult(($this->createCardStatusHistory)(
-                new CreateCardStatusHistoryDto(card: $card, comment: $dto->comment)
-            ));
-
-            DB::commit();
+            ($this->createCardStatusHistory)(new CreateCardStatusHistoryDto(card: $card, comment: $dto->comment, changedBy: $dto->user->id));
 
             return new ActivateCardResultDto(status: true);
-        } catch (ModelNotFoundException) {
-            return new ActivateCardResultDto(
-                status: false,
-                error: new ErrorDto(
-                    error: __('card::errors.card_not_found'),
-                    code: 404
-                ),
-            );
-        } catch (Throwable $excepion) {
-            DB::rollBack();
-
-            return new ActivateCardResultDto(
-                status: false,
-                error: new ErrorDto(
-                    error: $excepion->getMessage(),
-                    code: $excepion->getCode()
-                ),
-            );
-        }
+        });
     }
 }

@@ -10,6 +10,7 @@ class CreateCardStatusHistoryDto extends Dto
     public function __construct(
         public Card $card,
         public ?string $comment = null,
+        public string $changedBy
     ) {
     }
 }
