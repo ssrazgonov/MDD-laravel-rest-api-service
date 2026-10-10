@@ -1,6 +1,8 @@
 ARG PHP_VERSION
 
-FROM docker-nexus.admlr.lipetsk.ru/php/base:${PHP_VERSION}
+# Базовый образ с PHP. Укажите свой реестр через --build-arg REGISTRY=...
+ARG REGISTRY=docker.io/library
+FROM ${REGISTRY}/php:${PHP_VERSION}-fpm
 
 ARG BUILD_TAG
 LABEL build_tag=$BUILD_TAG

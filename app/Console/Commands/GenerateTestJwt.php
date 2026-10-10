@@ -19,7 +19,7 @@ class GenerateTestJwt extends Command
                             {--children=1 : Number of children (for parent type)}
                             {--child-snils= : Comma-separated list of SNILS for children (optional)}
                             {--user-snils= : SNILS for the user (optional)}
-                            {--realm=residents : Keycloak realm: residents, kids}
+                            {--realm=app : Keycloak realm: app, kids}
                             {--user-id= : Custom user ID (UUID will be generated if not provided)}';
 
     /**
@@ -94,16 +94,16 @@ class GenerateTestJwt extends Command
             'iat' => $iat,
             'auth_time' => $iat,
             'jti' => (string) Uuid::uuid4(),
-            'iss' => 'https://test5.admlr.lipetsk.ru/auth/realms/residents',
+            'iss' => env('TEST_JWT_ISSUER', 'https://keycloak.local/auth/realms/app'),
             'aud' => 'account',
             'sub' => $userId,
             'typ' => 'Bearer',
-            'azp' => 'resident_test',
+            'azp' => env('TEST_JWT_CLIENT', 'app-test'),
             'nonce' => (string) Uuid::uuid4(),
             'session_state' => (string) Uuid::uuid4(),
             'acr' => '1',
             'allowed-origins' => [
-                'https://test3.admlr.lipetsk.ru',
+                env('TEST_JWT_ORIGIN', 'https://app.local'),
             ],
             'realm_access' => [
                 'roles' => [
@@ -112,9 +112,9 @@ class GenerateTestJwt extends Command
                 ],
             ],
             'resource_access' => [
-                'resident_test' => [
+                env('TEST_JWT_CLIENT', 'app-test') => [
                     'roles' => [
-                        'resident',
+                        'user',
                     ],
                 ],
                 'account' => [
@@ -262,7 +262,7 @@ class GenerateTestJwt extends Command
     private function generateResourceAccess(): array
     {
         return [
-            'resident-card-service' => [
+            env('TEST_JWT_CLIENT', 'app-test') => [
                 'roles' => ['user'],
             ],
             'account' => [

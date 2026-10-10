@@ -1,17 +1,17 @@
 <?php
 
-namespace App\Modules\S2P\Http\Clients;
+namespace App\Modules\Provider\Http\Clients;
 
-use App\Modules\S2P\Dto\Http\GetUsage;
-use App\Modules\S2P\Dto\Http\GetUsageResponse;
-use App\Modules\S2P\Dto\Usage;
-use App\Modules\S2P\Enums\Endpoint;
+use App\Modules\Provider\Dto\Http\GetUsage;
+use App\Modules\Provider\Dto\Http\GetUsageResponse;
+use App\Modules\Provider\Dto\Usage;
+use App\Modules\Provider\Enums\Endpoint;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Throwable;
 
-class S2P
+class ProviderClient
 {
     private readonly string $clientId;
     private readonly string $clientSecret;
@@ -21,17 +21,17 @@ class S2P
 
     public function __construct()
     {
-        $this->clientId = config('s2p.client_id');
-        $this->clientSecret = config('s2p.client_secret');
-        $this->grantType = config('s2p.grant_type');
-        $this->url = config('s2p.http_schema') . '://' . config('s2p.url');
+        $this->clientId = config('provider.client_id');
+        $this->clientSecret = config('provider.client_secret');
+        $this->grantType = config('provider.grant_type');
+        $this->url = config('provider.http_schema') . '://' . config('provider.url');
 
         $this->proccessAuth();
     }
 
     private function proccessAuth(): void
     {
-        $cacheKey = "s2p.access_token.{$this->clientId}";
+        $cacheKey = "provider.access_token.{$this->clientId}";
 
         try {
             $this->accessToken = Cache::get($cacheKey);
@@ -50,7 +50,7 @@ class S2P
 
             Cache::put($cacheKey, $this->accessToken, now()->addSeconds(200));
         } catch (Throwable $exception) {
-            Log::error('S2P: ошибка получения accessToken', [
+            Log::error('Provider: ошибка получения accessToken', [
                 'message' => $exception->getMessage(),
                 'trace' => $exception->getTraceAsString(),
                 'code' => $exception->getCode(),
@@ -79,7 +79,7 @@ class S2P
 
             return new GetUsageResponse(services: $usages);
         } catch (Throwable $exception) {
-            Log::error('S2P: ошибка получения услуг', [
+            Log::error('Provider: ошибка получения услуг', [
                 'message' => $exception->getMessage(),
                 'trace' => $exception->getTraceAsString(),
                 'code' => $exception->getCode(),

@@ -1,8 +1,8 @@
 # MDD Laravel REST API Service
 
-REST API сервиса «Резидентская карта»: управление банковскими картами членов семьи
-(primary / dependent), разграничение прав доступа к картам, история статусов и
-получение данных о подключённых услугах из внешней системы **S2P**.
+REST API сервиса управления картами членов семьи: управление картами
+(primary / dependent), разграничение прав доступа, история статусов и
+получение данных о подключённых услугах из внешней системы-провайдера.
 
 Сервис аутентифицирует запросы по **JWT-токену Keycloak** и на основе данных токена
 автоматически синхронизирует пользователей, семейные группы и их участников.
@@ -19,7 +19,6 @@ REST API сервиса «Резидентская карта»: управле�
 - [API](#api)
 - [Тестирование](#тестирование)
 - [Качество кода](#качество-кода)
-- [CI/CD](#cicd)
 - [Известные проблемы](#известные-проблемы)
 
 ---
@@ -63,7 +62,7 @@ app/
 │   ├── Auth/                 # Keycloak: middleware, создание пользователя из JWT
 │   ├── User/                 # Пользователи, семейные группы, участники, идентификаторы
 │   ├── Card/                 # Карты: CRUD, активация, доступы, история статусов
-│   └── S2P/                  # Интеграция с внешним сервисом S2P
+│   └── Provider/             # Интеграция с внешним провайдером услуг
 └── Providers/
     ├── AppServiceProvider.php      # Макросы ответа + настройка Scramble
     └── ModuleServiceProvider.php   # Загрузка модулей из config/modules.php
@@ -77,7 +76,7 @@ app/
 
    - определяет путь модуля через Reflection (`setupPath`);
    - **config** — сливает `Modules/<Name>/config/<name>.php` в конфиг по ключу `name`
-     (поэтому `S2P/config/s2p.php` доступен как `config('s2p.*')`);
+     (поэтому `Provider/config/provider.php` доступен как `config('provider.*')`);
    - **providers** — регистрирует провайдеры модуля;
    - **routes** — подключает `Modules/<Name>/Http/routes.php`;
    - **migrations** — подключает `Modules/<Name>/Database/Migrations`.
@@ -185,8 +184,8 @@ groups ──1:N──> group_members ──1:N──> cards ──1:N──> ca
 ### Установка
 
 ```bash
-git clone git@github.com:ssrazgonov/MDD-laravel-rest-api-service.git
-cd MDD-laravel-rest-api-service
+git clone <url-вашего-репозитория>.git
+cd mdd-laravel-rest-api-service
 
 composer install
 cp .env.example .env
@@ -221,13 +220,17 @@ php artisan serve
 ### Альтернатива: Docker
 
 ```bash
-docker build --build-arg PHP_VERSION=8.4 -t resident-card-service .
-docker run --rm -p 8000:8000 resident-card-service
+docker build \
+  --build-arg PHP_VERSION=8.4 \
+  --build-arg REGISTRY=docker.io/library \
+  -t card-service .
+
+docker run --rm -p 8000:8000 card-service
 ```
 
-В `Dockerfile` базовый образ берётся из внутреннего реестра
-(`docker-nexus.admlr.lipetsk.ru/php/base`), поэтому для внешнего окружения
-образ нужно заменить.
+Базовый образ задаётся аргументом `REGISTRY` (по умолчанию `docker.io/library`,
+то есть официальный `php:<version>-fpm`). Для закрытого окружения укажите
+свой реестр: `--build-arg REGISTRY=registry.example.com/mirror`.
 
 ---
 
@@ -252,18 +255,18 @@ docker run --rm -p 8000:8000 resident-card-service
 `KEYCLOAK_TOKEN_ENCRYPTION_ALGORITHM` по умолчанию `RS256`;
 полный список — в `config/keycloak.php`.
 
-### Интеграция S2P
+### Интеграция с внешним провайдером услуг
 
 | Переменная | По умолчанию | Описание |
 |---|---|---|
-| `S2P_URL` | `demo.mars-t.ru` | Хост S2P |
-| `S2P_HTTP_SCHEMA` | `https` | Схема запроса |
-| `S2P_CLIENT_ID` | — | Client ID |
-| `S2P_CLIENT_SECRET` | — | Client Secret |
-| `S2P_GRANT_TYPE` | — | Grant type для получения токена |
+| `PROVIDER_URL` | `api.example.com` | Хост внешнего провайдера |
+| `PROVIDER_HTTP_SCHEMA` | `https` | Схема запроса |
+| `PROVIDER_CLIENT_ID` | — | Client ID |
+| `PROVIDER_CLIENT_SECRET` | — | Client Secret |
+| `PROVIDER_GRANT_TYPE` | — | Grant type для получения токена |
 
-Клиент `S2P` получает access token по OAuth2 и кеширует его на **200 секунд**
-в общем кеше (`cache` store) под ключом `s2p.access_token.<client_id>`.
+Клиент провайдера получает access token по OAuth2 и кеширует его на **200 секунд**
+в общем кеше (`cache` store) под ключом `provider.access_token.<client_id>`.
 
 ---
 
@@ -394,11 +397,11 @@ curl -H "Authorization: Bearer $TOKEN" \
   "http://127.0.0.1:8000/api/v1/user/members"
 ```
 
-#### Интеграция S2P (`S2PModule`)
+#### Интеграция с внешним провайдером услуг (`ProviderModule`)
 
 | Метод | Путь | Описание |
 |---|---|---|
-| `GET` | `/api/v1/user/services/usage` | Использование услуг из S2P |
+| `GET` | `/api/v1/user/services/usage` | Использование услуг из внешней системы |
 
 Query-параметры: `date_from`, `date_to`, `client_id`.
 
@@ -482,29 +485,11 @@ php artisan test tests/Feature/Modules/Card/Controllers/CardControllerTest.php
 
 ---
 
-## CI/CD
-
-GitLab CI (`.gitlab-ci.yml`) описывает стадии:
-
-| Стадия | Описание |
-|---|---|
-| `docker-build` | Сборка образа из шаблонов `devops-tools/gitlab-ci-templates/php` |
-| `tests` | `composer install` + `php artisan test` (`allow_failure: true`) |
-| `sonarqube-check` | Статический анализ (`allow_failure: true`) |
-| `deploy` | Деплой: `main` → prod, `develop` → dev (`10.248.55.33`) |
-
-Образ по умолчанию — `${NEXUS}/php/base:8.4`, `.env` копируется из переменной CI `ENV_TEST`.
-
-> `docker-build` использует `docker-nexus.admlr.lipetsk.ru` как базовый реестр —
-> доступен только из внутренней сети.
-
----
-
 ## Известные проблемы
 
 Найденные при анализе кодовой базы несоответствия. Стоит исправить:
 
-1. **Маршрут S2P без аутентификации.**
+1. **Маршрут провайдера без аутентификации.**
    `GET /api/v1/user/services/usage` объявлен вне группы `middleware(['auth:api', 'keycloak'])`,
    в отличие от маршрутов `Card` и `User`. Эндпоинт публично доступен и проксирует
    запросы к внешней системе.

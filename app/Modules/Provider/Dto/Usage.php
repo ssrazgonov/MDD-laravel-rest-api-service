@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Modules\S2P\Dto;
+namespace App\Modules\Provider\Dto;
 
 use App\Base\Dto;
 

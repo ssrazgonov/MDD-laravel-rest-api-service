@@ -1,9 +1,9 @@
 {
     "$schema": "https://getcomposer.org/schema.json",
-    "name": "laravel/laravel",
+    "name": "srazgonov/mdd-laravel-rest-api-service",
     "type": "project",
-    "description": "The skeleton application for the Laravel framework.",
-    "keywords": ["laravel", "framework"],
+    "description": "REST API сервиса управления картами членов семьи: Keycloak JWT, модульная архитектура, интеграция с внешним провайдером услуг.",
+    "keywords": ["laravel", "rest-api", "keycloak", "modular-architecture"],
     "license": "MIT",
     "require": {
         "php": "^8.2",

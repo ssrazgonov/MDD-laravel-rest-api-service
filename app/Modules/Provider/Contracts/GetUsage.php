@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Modules\S2P\Contracts;
+namespace App\Modules\Provider\Contracts;
 
 interface GetUsage
 {

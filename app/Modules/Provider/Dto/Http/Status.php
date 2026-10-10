@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Modules\S2P\Dto\Http;
+namespace App\Modules\Provider\Dto\Http;
 
 class Status
 {
